@@ -40,24 +40,9 @@ function useRSVPCount() {
   useEffect(() => {
     async function fetchCount() {
       try {
-        const res = await fetch("https://base.easscan.org/graphql", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query: `{
-              attestations(
-                where: {
-                  schemaId: { equals: "${SCHEMA_UID}" }
-                }
-              ) {
-                id
-              }
-            }`,
-          }),
-        });
+        const res = await fetch("/api/rsvp-count");
         const json = await res.json();
-        const total = json?.data?.attestations?.length ?? 0;
-        setCount(total);
+        setCount(json.count ?? 0);
       } catch {
         setCount(null);
       }
