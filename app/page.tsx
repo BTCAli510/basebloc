@@ -57,27 +57,14 @@ function useRSVPCount() {
   useEffect(() => {
     async function fetchCount() {
       try {
-        const res = await fetch("https://base.easscan.org/graphql", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query: `{
-              aggregateAttestation(
-                where: {
-                  schemaId: { equals: "${SCHEMA_UID}" }
-                }
-              ) {
-                _count {
-                  _all
-                }
-              }
-            }`,
-          }),
+        const res = await fetch("/api/rsvp-count", {
+          cache: "no-store",
         });
 
+        if (!res.ok) throw new Error("Failed to fetch RSVP count");
+
         const json = await res.json();
-        const total = json?.data?.aggregateAttestation?._count?._all ?? 0;
-        setCount(total);
+        setCount(json?.count ?? 0);
       } catch {
         setCount(null);
       }
