@@ -3,14 +3,26 @@
 import { useState, useEffect } from "react";
 import { useAccount, useWalletClient } from "wagmi";
 import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
+import { Identity, Avatar, Name, Badge } from "@coinbase/onchainkit/identity";
+import { useName } from "@coinbase/onchainkit/identity";
 import { EAS, SchemaEncoder, NO_EXPIRATION } from "@ethereum-attestation-service/eas-sdk";
 import { BrowserProvider } from "ethers";
+import { base } from "viem/chains";
 
 const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
 const SCHEMA_UID =
-  "0xA953E6BCB14432C88B30183BD4020F349A8A03F2BECA1D5D2E09761F7B5AAC36";
+  "0xe75ec39ab8bfdd680f02b11817ed9e10556850278264c0917d645c73866784d9";
+
+const COINBASE_VERIFIED_SCHEMA_ID =
+  "0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9";
 
 const EVENT_DATE = new Date("2026-05-23T00:00:00");
+
+// Returns 0x1234...abcd style label for wallets without a Basename
+function getShortWalletLabel(address?: string) {
+  if (!address) return "Guest";
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
 
 function useCountdown(target: Date) {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -77,30 +89,54 @@ export default function Home() {
   const [isAttesting, setIsAttesting] = useState(false);
   const [attestationUID, setAttestationUID] = useState("");
   const [error, setError] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [nameEdited, setNameEdited] = useState(false);
+
   const { address, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const countdown = useCountdown(EVENT_DATE);
   const rsvpCount = useRSVPCount();
 
+  // Resolve Basename for connected wallet
+  const { data: basename } = useName(
+    address ? { address, chain: base } : { address: undefined as any, chain: base }
+  );
+
+  // Auto-prefill displayName with Basename once resolved,
+  // but only if the user hasn't manually edited the field yet
+  useEffect(() => {
+    if (basename && !nameEdited) {
+      setDisplayName(basename);
+    }
+  }, [basename, nameEdited]);
+
   async function handleRSVP() {
     if (!address) return;
     setIsAttesting(true);
     setError("");
+
     try {
       if (!walletClient) throw new Error("Wallet not connected");
+
       const provider = new BrowserProvider(walletClient.transport);
       const signer = await provider.getSigner();
       const eas = new EAS(EAS_CONTRACT);
       eas.connect(signer);
 
+      // Use typed name, Basename, or short wallet label — in that priority order
+      const finalDisplayName = displayName.trim() || getShortWalletLabel(address);
+
       const schemaEncoder = new SchemaEncoder(
-        "string eventName,string eventDate,string coalition,bool attending"
+        "string eventName,uint64 eventDate,string coalition,bool attending,string ticketTier,string displayName"
       );
+
       const encodedData = schemaEncoder.encodeData([
         { name: "eventName", value: "MY CITY OUR MUSIC", type: "string" },
-        { name: "eventDate", value: "May 23 2026", type: "string" },
+        { name: "eventDate", value: BigInt(1748649600), type: "uint64" }, // May 23 2026 00:00:00 UTC
         { name: "coalition", value: "Oakland Bloc", type: "string" },
         { name: "attending", value: true, type: "bool" },
+        { name: "ticketTier", value: "General", type: "string" },
+        { name: "displayName", value: finalDisplayName, type: "string" },
       ]);
 
       const tx = await eas.attest({
@@ -123,6 +159,7 @@ export default function Home() {
     }
   }
 
+  // ── CONFIRMATION SCREEN ────────────────────────────────────────────────────
   if (screen === "confirmation") {
     return (
       <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center p-8 relative">
@@ -130,18 +167,54 @@ export default function Home() {
           BASE Bloc
         </div>
         <div className="flex flex-col items-center max-w-lg">
-          <h1 className="text-3xl font-bold mb-4 text-black">
+          <h1 className="text-3xl font-bold mb-6 text-black">
             You&apos;re in. Power to the People. Onchain.
           </h1>
-          <p className="text-sm mb-2 break-all" style={{ color: "#0052FF" }}>{attestationUID}</p>
+
+          {/* Onchain identity card */}
+          {address && (
+            <div className="flex flex-col items-center mb-6">
+              <Identity
+                address={address}
+                schemaId={COINBASE_VERIFIED_SCHEMA_ID}
+                className="flex flex-col items-center"
+              >
+                <Avatar
+                  address={address}
+                  chain={base}
+                  className="w-20 h-20 rounded-full mb-3"
+                />
+                <Name
+                  address={address}
+                  chain={base}
+                  className="font-semibold text-black text-lg"
+                >
+                  <Badge />
+                </Name>
+              </Identity>
+              {/* Show the attested displayName below the Basename if different */}
+              {displayName && displayName !== basename && (
+                <p className="text-sm mt-1" style={{ color: "#0052FF" }}>
+                  {displayName}
+                </p>
+              )}
+            </div>
+          )}
+
+          <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
+            Attestation UID
+          </p>
+          <p className="text-sm mb-2 break-all font-mono" style={{ color: "#0052FF" }}>
+            {attestationUID}
+          </p>
           <a
             href={`https://base.easscan.org/attestation/view/${attestationUID}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline mb-6"
+            className="underline mb-8 text-sm"
             style={{ color: "#0052FF" }}
           >
-            View on EAS Scan
+            View on EAS Scan →
           </a>
           <button
             type="button"
@@ -156,6 +229,7 @@ export default function Home() {
     );
   }
 
+  // ── LANDING SCREEN ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center p-8 relative">
       <div className="absolute top-4 right-4 text-sm font-medium text-black">
@@ -182,7 +256,10 @@ export default function Home() {
               <span className="text-3xl font-bold text-black w-14 text-center">
                 {String(value).padStart(2, "0")}
               </span>
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#0052FF" }}>
+              <span
+                className="text-xs font-semibold uppercase tracking-widest"
+                style={{ color: "#0052FF" }}
+              >
                 {label}
               </span>
             </div>
@@ -206,6 +283,29 @@ export default function Home() {
           )}
         </div>
 
+        {/* Name input — only shown after wallet connects */}
+        {isConnected && (
+          <div className="w-full max-w-md mb-4">
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => {
+                setDisplayName(e.target.value);
+                setNameEdited(true);
+              }}
+              placeholder={basename ?? `Name (optional)`}
+              className="w-full border rounded-full px-4 py-3 text-sm text-black outline-none focus:ring-2"
+              style={{ borderColor: "#0052FF" }}
+              maxLength={40}
+            />
+            <p className="text-xs mt-1" style={{ color: "#0052FF" }}>
+              {basename
+                ? "Pre-filled from your Basename — edit freely"
+                : "Optional — leave blank to use your wallet address"}
+            </p>
+          </div>
+        )}
+
         {!isConnected ? (
           <Wallet>
             <ConnectWallet disconnectedLabel="RSVP Onchain" className="cursor-pointer" />
@@ -222,7 +322,9 @@ export default function Home() {
               {isAttesting ? "Attesting..." : "RSVP Onchain"}
             </button>
             {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
-            <p className="mt-4 text-sm" style={{ color: "#0052FF" }}>Connected: {address}</p>
+            <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
+              Connected: {address}
+            </p>
           </>
         )}
 
