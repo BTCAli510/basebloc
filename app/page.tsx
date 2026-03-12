@@ -34,7 +34,7 @@ function TopCornerBrand() {
         className="hover:opacity-80 transition-opacity inline-block text-right leading-tight"
         style={{ color: "inherit", textDecoration: "none" }}
       >
-        <span>BASE - Oakland Bloc <em>presents</em></span>
+        <span>BASE - Oakland Bloc</span>
         <br />
         <span><em>presents</em></span>
          <br />
