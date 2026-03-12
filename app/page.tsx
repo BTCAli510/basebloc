@@ -250,7 +250,7 @@ export default function Home() {
       <TopCornerBrand />
 
       <div className="flex flex-col items-center max-w-lg w-full">
-        <h1 className="text-4xl font-bold mb-2 text-black">BASE IS FOR EVERYONE</h1>
+        <h1 className="text-4xl font-bold mb-2 text-black">Base is for everyone</h1>
         <p className="text-xl mb-2 font-semibold" style={{ color: "#0052FF" }}>
           Oakland Bloc
         </p>
