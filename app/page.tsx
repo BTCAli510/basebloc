@@ -36,6 +36,8 @@ function TopCornerBrand() {
       >
         <span>BASE - Oakland Bloc <em>presents</em></span>
         <br />
+        <span><em>presents</em></span>
+         <br />
         <span>BASE Bloc</span>
       </a>
     </div>
