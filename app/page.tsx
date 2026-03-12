@@ -26,15 +26,17 @@ function getShortWalletLabel(address?: string) {
 
 function TopCornerBrand() {
   return (
-   <div className="absolute top-4 right-4 text-xs font-medium text-black whitespace-nowrap">
+    <div className="absolute top-4 right-4 text-xs font-medium text-black">
       <a
         href="https://baseoak.org/"
         target="_blank"
         rel="noopener noreferrer"
-        className="hover:opacity-80 transition-opacity"
+        className="hover:opacity-80 transition-opacity inline-block text-right leading-tight"
         style={{ color: "inherit", textDecoration: "none" }}
       >
-        BASE - Oakland Bloc <em>presents</em> BASE BLOC
+        <span>BASE - Oakland Bloc <em>presents</em></span>
+        <br />
+        <span>BASE Bloc</span>
       </a>
     </div>
   );
