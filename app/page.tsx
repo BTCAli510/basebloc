@@ -346,9 +346,6 @@ export default function Home() {
         <p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
           Power to the People. Onchain.
         </p>
-        <p className="mt-2 text-xs" style={{ color: "#0052FF" }}>
-          Produced by Hip Hop TV &amp; Citiesabc
-        </p>
       </div>
     </div>
   );
