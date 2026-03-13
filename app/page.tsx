@@ -27,16 +27,21 @@ function getShortWalletLabel(address?: string) {
 function TopCornerBrand() {
   return (
     <div className="absolute top-4 right-4 text-black">
-      
+      <a
         href="https://baseoak.org/"
         target="_blank"
         rel="noopener noreferrer"
         className="hover:opacity-80 transition-opacity inline-flex flex-col items-center leading-tight"
         style={{ color: "inherit", textDecoration: "none" }}
       >
-        <span className="text-sm font-medium whitespace-nowrap">BASE - Oakland bloc</span>
+        <span className="text-sm font-medium whitespace-nowrap">
+          BASE - Oakland Bloc
+        </span>
         <span className="text-sm italic font-medium">presents</span>
-        <span className="text-sm font-medium whitespace-nowrap" style={{ color: "#0052FF" }}>
+        <span
+          className="text-sm font-medium whitespace-nowrap"
+          style={{ color: "#0052FF" }}
+        >
           BASEbloc.app
         </span>
       </a>
