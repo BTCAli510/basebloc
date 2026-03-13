@@ -404,42 +404,40 @@ export default function Home() {
           </div>
         )}
 
-        {!isConnected ? (
-          <Wallet>
-            <ConnectWallet
-              disconnectedLabel="RSVP on Base"
-              className="cursor-pointer"
-            />
-          </Wallet>
-        ) : (
-         <>
-  <button
-    type="button"
-    onClick={handleRSVP}
-    disabled={isAttesting}
-    className="text-white px-8 py-4 rounded-full text-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-    style={{ backgroundColor: "#0052FF" }}
-  >
-    {isAttesting ? "Attesting..." : "RSVP on Base"}
-  </button>
+    {!isConnected ? (
+  <Wallet>
+    <ConnectWallet
+      disconnectedLabel="RSVP on Base"
+      className="cursor-pointer"
+    />
+  </Wallet>
+) : (
+  <>
+    <button
+      type="button"
+      onClick={handleRSVP}
+      disabled={isAttesting}
+      className="text-white px-8 py-4 rounded-full text-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      style={{ backgroundColor: "#0052FF" }}
+    >
+      {isAttesting ? "Attesting..." : "RSVP on Base"}
+    </button>
 
-  <p className="mt-5 text-sm text-black max-w-md">
-    RSVP on Base and receive a verified participation record for this summit
-  </p>
+    {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
 
-  <p className="mt-5 text-sm text-black max-w-md">
-    RSVP on Base and receive a verified participation record for this summit
-  </p>
-           
-  <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
-    Connected: {address}
-  </p>
-</>
-        )}
+    <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
+      Connected: {address}
+    </p>
+  </>
+)}
 
-        <p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
-          Power to the People. Onchain.
-        </p>
+<p className="mt-5 text-sm text-black max-w-md">
+  RSVP on Base and receive a verified participation record for this summit
+</p>
+
+<p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
+  Power to the People. Onchain.
+</p>
 
         <div
           className="w-full max-w-lg mt-12 pt-8 text-left"
