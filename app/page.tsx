@@ -29,9 +29,9 @@ function getShortWalletLabel(address?: string) {
 function TopCornerBrand() {
   return (
     
-   href="https://baseoak.org/"
-  target="_blank"
-  rel="noopener noreferrer"
+      href="https://baseoak.org/"
+      target="_blank"
+      rel="noopener noreferrer"
       className="absolute top-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:top-6 md:right-6 hover:opacity-90 transition-opacity z-20"
       aria-label="BASE - Oakland bloc"
     >
@@ -44,22 +44,33 @@ function TopCornerBrand() {
   );
 }
 
+function EveryoneWord() {
+  return (
+    <span className="relative inline-block whitespace-nowrap px-2">
+      <span className="relative z-10">everyone</span>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 320 120"
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-visible"
+        style={{ width: "128%", height: "155%" }}
+      >
+        <ellipse cx="160" cy="60" rx="145" ry="38" fill="none" stroke="#0052FF" strokeWidth="4.5" strokeLinecap="round" opacity="0.95" transform="rotate(-3 160 60)" />
+        <ellipse cx="160" cy="60" rx="150" ry="42" fill="none" stroke="#0052FF" strokeWidth="3.2" strokeLinecap="round" opacity="0.82" transform="rotate(2 160 60)" />
+        <ellipse cx="160" cy="60" rx="141" ry="35" fill="none" stroke="#0052FF" strokeWidth="2.6" strokeLinecap="round" opacity="0.72" transform="rotate(-1 160 60)" />
+        <ellipse cx="160" cy="60" rx="154" ry="45" fill="none" stroke="#0052FF" strokeWidth="2.2" strokeLinecap="round" opacity="0.55" transform="rotate(4 160 60)" />
+        <path d="M300 56c10 5 12 15 3 23" fill="none" stroke="#0052FF" strokeWidth="3" strokeLinecap="round" opacity="0.75" />
+      </svg>
+    </span>
+  );
+}
+
 function useCountdown(target: Date) {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
     function calc() {
       const diff = target.getTime() - Date.now();
-      if (diff <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-
+      if (diff <= 0) { setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 }); return; }
       setTimeLeft({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
@@ -67,7 +78,6 @@ function useCountdown(target: Date) {
         seconds: Math.floor((diff / 1000) % 60),
       });
     }
-
     calc();
     const id = setInterval(calc, 1000);
     return () => clearInterval(id);
@@ -90,85 +100,12 @@ function useRSVPCount() {
         setCount(null);
       }
     }
-
     fetchCount();
     const id = setInterval(fetchCount, 30000);
     return () => clearInterval(id);
   }, []);
 
   return count;
-}
-
-function EveryoneWord() {
-  return (
-    <span className="relative inline-block whitespace-nowrap px-2">
-      <span className="relative z-10">everyone</span>
-
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 320 120"
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-visible"
-        style={{ width: "128%", height: "155%" }}
-      >
-        <ellipse
-          cx="160"
-          cy="60"
-          rx="145"
-          ry="38"
-          fill="none"
-          stroke="#0052FF"
-          strokeWidth="4.5"
-          strokeLinecap="round"
-          opacity="0.95"
-          transform="rotate(-3 160 60)"
-        />
-        <ellipse
-          cx="160"
-          cy="60"
-          rx="150"
-          ry="42"
-          fill="none"
-          stroke="#0052FF"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-          opacity="0.82"
-          transform="rotate(2 160 60)"
-        />
-        <ellipse
-          cx="160"
-          cy="60"
-          rx="141"
-          ry="35"
-          fill="none"
-          stroke="#0052FF"
-          strokeWidth="2.6"
-          strokeLinecap="round"
-          opacity="0.72"
-          transform="rotate(-1 160 60)"
-        />
-        <ellipse
-          cx="160"
-          cy="60"
-          rx="154"
-          ry="45"
-          fill="none"
-          stroke="#0052FF"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          opacity="0.55"
-          transform="rotate(4 160 60)"
-        />
-        <path
-          d="M300 56c10 5 12 15 3 23"
-          fill="none"
-          stroke="#0052FF"
-          strokeWidth="3"
-          strokeLinecap="round"
-          opacity="0.75"
-        />
-      </svg>
-    </span>
-  );
 }
 
 export default function Home() {
@@ -193,22 +130,18 @@ export default function Home() {
   const basename = nameQuery?.data ?? "";
 
   useEffect(() => {
-    if (basename && !nameEdited) {
-      setDisplayName(basename);
-    }
+    if (basename && !nameEdited) setDisplayName(basename);
   }, [basename, nameEdited]);
 
   async function handleRSVP() {
     if (!address) return;
-
     setIsAttesting(true);
     setError("");
 
     try {
       if (!walletClient) throw new Error("Wallet not connected");
 
-      const finalDisplayName =
-        displayName.trim() || basename || getShortWalletLabel(address);
+      const finalDisplayName = displayName.trim() || basename || getShortWalletLabel(address);
 
       const schemaEncoder = new SchemaEncoder(
         "string eventName,uint64 eventDate,string coalition,bool attending,string ticketTier,string displayName"
@@ -217,7 +150,7 @@ export default function Home() {
       const encodedData = schemaEncoder.encodeData([
         { name: "eventName", value: "MY CITY OUR MUSIC", type: "string" },
         { name: "eventDate", value: EVENT_TIMESTAMP_UTC, type: "uint64" },
-        { name: "coalition", value: "Oakland bloc", type: "string" },
+        { name: "coalition", value: "Oakland Bloc", type: "string" },
         { name: "attending", value: true, type: "bool" },
         { name: "ticketTier", value: "General", type: "string" },
         { name: "displayName", value: finalDisplayName, type: "string" },
@@ -262,8 +195,7 @@ export default function Home() {
               recipient: address,
               expirationTime: BigInt(0),
               revocable: true,
-              refUID:
-                "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
+              refUID: "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
               data: encodedData as `0x${string}`,
               value: BigInt(0),
             },
@@ -287,18 +219,13 @@ export default function Home() {
               },
             ],
             capabilities: paymasterUrl
-              ? {
-                  paymasterService: {
-                    url: paymasterUrl,
-                  },
-                }
+              ? { paymasterService: { url: paymasterUrl } }
               : {},
             dataSuffix: BUILDER_CODE_DATA_SUFFIX,
           },
         ],
       } as never);
 
-      // Poll EAS GraphQL for attestation UID
       let uid = "";
       for (let i = 0; i < 20; i++) {
         await new Promise((r) => setTimeout(r, 3000));
@@ -315,21 +242,14 @@ export default function Home() {
                   }
                   orderBy: { timeCreated: desc }
                   take: 1
-                ) {
-                  id
-                }
+                ) { id }
               }`,
             }),
           });
           const json = await res.json();
           const found = json?.data?.attestations?.[0]?.id;
-          if (found) {
-            uid = found;
-            break;
-          }
-        } catch {
-          // keep polling
-        }
+          if (found) { uid = found; break; }
+        } catch { /* keep polling */ }
       }
 
       if (!uid) uid = txHash as string;
@@ -352,7 +272,6 @@ export default function Home() {
           <h1 className="text-3xl font-bold mb-6 text-black">
             You&apos;re in. Power to the People. Onchain.
           </h1>
-
           {address && (
             <div className="flex flex-col items-center mb-6">
               <Identity
@@ -360,37 +279,20 @@ export default function Home() {
                 schemaId={COINBASE_VERIFIED_SCHEMA_ID}
                 className="flex flex-col items-center"
               >
-                <Avatar
-                  address={address}
-                  chain={base}
-                  className="w-20 h-20 rounded-full mb-3"
-                />
-                <Name
-                  address={address}
-                  chain={base}
-                  className="font-semibold text-black text-lg"
-                >
+                <Avatar address={address} chain={base} className="w-20 h-20 rounded-full mb-3" />
+                <Name address={address} chain={base} className="font-semibold text-black text-lg">
                   <Badge />
                 </Name>
               </Identity>
-
               <p className="text-sm mt-2" style={{ color: "#0052FF" }}>
                 RSVP recorded as: {confirmedDisplayName}
               </p>
             </div>
           )}
-
-          <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-            Verification Record
-          </p>
-
-          <p
-            className="text-sm mb-2 break-all font-mono"
-            style={{ color: "#0052FF" }}
-          >
+          <p className="text-xs mb-1" style={{ color: "#0052FF" }}>Verification Record</p>
+          <p className="text-sm mb-2 break-all font-mono" style={{ color: "#0052FF" }}>
             {attestationUID}
           </p>
-
           
             href={`https://base.easscan.org/attestation/view/${attestationUID}`}
             target="_blank"
@@ -400,7 +302,6 @@ export default function Home() {
           >
             View your onchain record →
           </a>
-
           <button
             type="button"
             onClick={() => setScreen("landing")}
@@ -419,21 +320,23 @@ export default function Home() {
       <TopCornerBrand />
 
       <div className="flex flex-col items-center max-w-lg w-full">
+
         <h1 className="text-4xl font-bold mb-2 text-black leading-tight">
           Base is for <EveryoneWord />
         </h1>
-
         <p className="text-xl mb-2 font-semibold" style={{ color: "#0052FF" }}>
-          Oakland bloc
+          Oakland Bloc
         </p>
-
         <p className="text-2xl font-bold mb-1 text-black">MY CITY OUR MUSIC</p>
 
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland bloc
+          Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland Bloc
         </p>
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Powered onchain by BASE bloc
+          Powered onchain by BASE Bloc
+        </p>
+        <p className="text-xs mb-3" style={{ color: "#0052FF" }}>
+          RSVP on Base and receive a verified participation record for this summit
         </p>
 
         <p className="text-sm mb-6" style={{ color: "#0052FF" }}>
@@ -451,10 +354,7 @@ export default function Home() {
               <span className="text-3xl font-bold text-black w-14 text-center">
                 {String(value).padStart(2, "0")}
               </span>
-              <span
-                className="text-xs font-semibold uppercase tracking-widest"
-                style={{ color: "#0052FF" }}
-              >
+              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#0052FF" }}>
                 {label}
               </span>
             </div>
@@ -473,9 +373,7 @@ export default function Home() {
               🔵 {rsvpCount} verified {rsvpCount === 1 ? "RSVP" : "RSVPs"} onchain
             </p>
           ) : (
-            <p className="text-sm" style={{ color: "#0052FF" }}>
-              Loading...
-            </p>
+            <p className="text-sm" style={{ color: "#0052FF" }}>Loading...</p>
           )}
         </div>
 
@@ -484,10 +382,7 @@ export default function Home() {
             <input
               type="text"
               value={displayName}
-              onChange={(e) => {
-                setDisplayName(e.target.value);
-                setNameEdited(true);
-              }}
+              onChange={(e) => { setDisplayName(e.target.value); setNameEdited(true); }}
               placeholder={basename || "Name (optional)"}
               className="w-full border rounded-full px-4 py-3 text-sm text-black outline-none focus:ring-2"
               style={{ borderColor: "#0052FF" }}
@@ -503,10 +398,7 @@ export default function Home() {
 
         {!isConnected ? (
           <Wallet>
-            <ConnectWallet
-              disconnectedLabel="RSVP on Base"
-              className="cursor-pointer"
-            />
+            <ConnectWallet disconnectedLabel="RSVP on Base" className="cursor-pointer" />
           </Wallet>
         ) : (
           <>
@@ -519,56 +411,37 @@ export default function Home() {
             >
               {isAttesting ? "Attesting..." : "RSVP on Base"}
             </button>
-
             {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
-
             <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
               Connected: {address}
             </p>
           </>
         )}
 
-        <p className="mt-5 text-sm text-black max-w-md">
-          RSVP on Base and receive a verified participation record for this summit
-        </p>
-
         <p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
           Power to the People. Onchain.
         </p>
 
-        <div
-          className="w-full max-w-lg mt-12 pt-8 text-left"
-          style={{ borderTop: "1px solid #e5e7eb" }}
-        >
+        {/* ── FOOTER CONTEXT ── */}
+        <div className="w-full max-w-lg mt-12 pt-8 text-left" style={{ borderTop: "1px solid #e5e7eb" }}>
           <div className="mb-6">
-            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              About This Event
-            </p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">About This Event</p>
             <p className="text-xs leading-relaxed text-black">
               MY CITY OUR MUSIC is a music + creative industries + AI summit produced by Hip Hop TV
               and Citiesabc. Bringing together artists, builders, and culture-makers at the Henry J.
               Kaiser Center for the Arts in Oakland on May 23, 2026.
             </p>
           </div>
-
-          <div
-            className="mb-6"
-            style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}
-          >
-            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              About BASE bloc
-            </p>
+          <div className="mb-6" style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">About BASE Bloc</p>
             <p className="text-xs leading-relaxed text-black">
-              BASE bloc is culture&apos;s onchain community layer, built on Base. We turn
+              BASE Bloc is culture&apos;s onchain community layer, built on Base. We turn
               real-world participation into verified onchain records that connect everyone
               to the global onchain economy.
             </p>
           </div>
-
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
-            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              Why RSVP Onchain?
-            </p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">Why RSVP Onchain?</p>
             <p className="text-xs leading-relaxed text-black">
               Your RSVP isn&apos;t just a confirmation — it&apos;s a verified participation credential
               written to Base. This attestation is your permanent onchain record: proof you were here,
@@ -577,6 +450,7 @@ export default function Home() {
             </p>
           </div>
         </div>
+
       </div>
     </div>
   );
