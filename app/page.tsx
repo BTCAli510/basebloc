@@ -354,7 +354,7 @@ export default function Home() {
             <p className="text-xs leading-relaxed text-black">
               BASE Bloc is Oakland&apos;s onchain community layer — built on Base. We convert
               real-world cultural participation into verified onchain records, connecting Oakland&apos;s
-              creative community to the global economy of the internet.
+              builder community to the global economy of the internet.
             </p>
           </div>
 
