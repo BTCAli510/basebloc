@@ -27,10 +27,10 @@ function getShortWalletLabel(address?: string) {
 }
 
 function TopCornerBrand() {
-  return (
-    
-      href="https://baseoak.org/"
-      target="_blank"
+return (
+<a
+href="https://baseoak.org/"
+target="_blank"
       rel="noopener noreferrer"
       className="absolute top-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:top-6 md:right-6 hover:opacity-90 transition-opacity z-20"
       aria-label="BASE - Oakland bloc"
