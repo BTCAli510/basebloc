@@ -60,33 +60,60 @@ function EveryoneWord() {
         style={{ width: "128%", height: "155%" }}
       >
         <ellipse
-          cx="160" cy="60" rx="145" ry="38"
-          fill="none" stroke="#0052FF" strokeWidth="4.5"
-          strokeLinecap="round" opacity="0.95"
+          cx="160"
+          cy="60"
+          rx="145"
+          ry="38"
+          fill="none"
+          stroke="#0052FF"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+          opacity="0.95"
           transform="rotate(-3 160 60)"
         />
         <ellipse
-          cx="160" cy="60" rx="150" ry="42"
-          fill="none" stroke="#0052FF" strokeWidth="3.2"
-          strokeLinecap="round" opacity="0.82"
+          cx="160"
+          cy="60"
+          rx="150"
+          ry="42"
+          fill="none"
+          stroke="#0052FF"
+          strokeWidth="3.2"
+          strokeLinecap="round"
+          opacity="0.82"
           transform="rotate(2 160 60)"
         />
         <ellipse
-          cx="160" cy="60" rx="141" ry="35"
-          fill="none" stroke="#0052FF" strokeWidth="2.6"
-          strokeLinecap="round" opacity="0.72"
+          cx="160"
+          cy="60"
+          rx="141"
+          ry="35"
+          fill="none"
+          stroke="#0052FF"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          opacity="0.72"
           transform="rotate(-1 160 60)"
         />
         <ellipse
-          cx="160" cy="60" rx="154" ry="45"
-          fill="none" stroke="#0052FF" strokeWidth="2.2"
-          strokeLinecap="round" opacity="0.55"
+          cx="160"
+          cy="60"
+          rx="154"
+          ry="45"
+          fill="none"
+          stroke="#0052FF"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          opacity="0.55"
           transform="rotate(4 160 60)"
         />
         <path
           d="M300 56c10 5 12 15 3 23"
-          fill="none" stroke="#0052FF" strokeWidth="3"
-          strokeLinecap="round" opacity="0.75"
+          fill="none"
+          stroke="#0052FF"
+          strokeWidth="3"
+          strokeLinecap="round"
+          opacity="0.75"
         />
       </svg>
     </span>
@@ -95,7 +122,10 @@ function EveryoneWord() {
 
 function useCountdown(target: Date) {
   const [timeLeft, setTimeLeft] = useState({
-    days: 0, hours: 0, minutes: 0, seconds: 0,
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
   });
 
   useEffect(() => {
@@ -112,6 +142,7 @@ function useCountdown(target: Date) {
         seconds: Math.floor((diff / 1000) % 60),
       });
     }
+
     calc();
     const id = setInterval(calc, 1000);
     return () => clearInterval(id);
@@ -134,6 +165,7 @@ function useRSVPCount() {
         setCount(null);
       }
     }
+
     fetchCount();
     const id = setInterval(fetchCount, 30000);
     return () => clearInterval(id);
@@ -171,19 +203,26 @@ export default function Home() {
 
   async function handleRSVP() {
     if (!address) return;
+
     setIsAttesting(true);
     setError("");
+
     try {
       if (!walletClient) throw new Error("Wallet not connected");
+
       const provider = new BrowserProvider(walletClient.transport);
       const signer = await provider.getSigner();
+
       const eas = new EAS(EAS_CONTRACT);
       eas.connect(signer);
+
       const finalDisplayName =
         displayName.trim() || basename || getShortWalletLabel(address);
+
       const schemaEncoder = new SchemaEncoder(
         "string eventName,uint64 eventDate,string coalition,bool attending,string ticketTier,string displayName"
       );
+
       const encodedData = schemaEncoder.encodeData([
         { name: "eventName", value: "MY CITY OUR MUSIC", type: "string" },
         { name: "eventDate", value: EVENT_TIMESTAMP_UTC, type: "uint64" },
@@ -192,6 +231,7 @@ export default function Home() {
         { name: "ticketTier", value: "General", type: "string" },
         { name: "displayName", value: finalDisplayName, type: "string" },
       ]);
+
       const tx = await eas.attest({
         schema: SCHEMA_UID,
         data: {
@@ -201,6 +241,7 @@ export default function Home() {
           data: encodedData,
         },
       });
+
       const uid = await tx.wait();
       setConfirmedDisplayName(finalDisplayName);
       setAttestationUID(uid);
@@ -220,6 +261,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold mb-6 text-black">
             You&apos;re in. Power to the People. Onchain.
           </h1>
+
           {address && (
             <div className="flex flex-col items-center mb-6">
               <Identity
@@ -227,31 +269,49 @@ export default function Home() {
                 schemaId={COINBASE_VERIFIED_SCHEMA_ID}
                 className="flex flex-col items-center"
               >
-                <Avatar address={address} chain={base} className="w-20 h-20 rounded-full mb-3" />
-                <Name address={address} chain={base} className="font-semibold text-black text-lg">
+                <Avatar
+                  address={address}
+                  chain={base}
+                  className="w-20 h-20 rounded-full mb-3"
+                />
+                <Name
+                  address={address}
+                  chain={base}
+                  className="font-semibold text-black text-lg"
+                >
                   <Badge />
                 </Name>
               </Identity>
+
               <p className="text-sm mt-2" style={{ color: "#0052FF" }}>
                 RSVP recorded as: {confirmedDisplayName}
               </p>
             </div>
           )}
+
           <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
             Verification Record
           </p>
-          <p className="text-sm mb-2 break-all font-mono" style={{ color: "#0052FF" }}>
-            {attestationUID}
-          </p>
-          
-            href={`https://base.easscan.org/attestation/view/${attestationUID}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline mb-8 text-sm"
+
+          <p
+            className="text-sm mb-2 break-all font-mono"
             style={{ color: "#0052FF" }}
           >
-            View your onchain record →
-          </a>
+            {attestationUID}
+          </p>
+
+          {attestationUID && (
+            <a
+              href={`https://base.easscan.org/attestation/view/${attestationUID}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline mb-8 text-sm"
+              style={{ color: "#0052FF" }}
+            >
+              View your onchain record →
+            </a>
+          )}
+
           <button
             type="button"
             onClick={() => setScreen("landing")}
@@ -270,23 +330,24 @@ export default function Home() {
       <TopCornerBrand />
 
       <div className="flex flex-col items-center max-w-lg w-full">
-
-        {/* ── HERO ── */}
         <h1 className="text-4xl font-bold mb-2 text-black leading-tight">
           Base is for <EveryoneWord />
         </h1>
+
         <p className="text-xl mb-2 font-semibold" style={{ color: "#0052FF" }}>
-          Oakland bloc
+          Oakland Bloc
         </p>
+
         <p className="text-2xl font-bold mb-1 text-black">MY CITY OUR MUSIC</p>
 
-        {/* ── CONTEXT BLOCK ── */}
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland bloc
+          Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland Bloc
         </p>
+
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Powered onchain by BASE bloc
+          Powered onchain by BASE Bloc
         </p>
+
         <p className="text-xs mb-3" style={{ color: "#0052FF" }}>
           RSVP on Base and receive a verified participation record for this summit
         </p>
@@ -295,7 +356,6 @@ export default function Home() {
           May 23, 2026 — The Henry J. Kaiser Center for the Arts
         </p>
 
-        {/* ── COUNTDOWN ── */}
         <div className="w-full flex justify-center gap-4 mb-6">
           {[
             { label: "Days", value: countdown.days },
@@ -317,25 +377,24 @@ export default function Home() {
           ))}
         </div>
 
-        {/* ── FLYER ── */}
         <img
           src="/event-flyer.png"
           alt="MY CITY OUR MUSIC summit flyer"
           className="w-full max-w-md mx-auto my-6 rounded-lg"
         />
 
-        {/* ── RSVP COUNT ── */}
         <div className="mb-4">
           {rsvpCount !== null ? (
             <p className="text-sm font-semibold" style={{ color: "#0052FF" }}>
               🔵 {rsvpCount} verified {rsvpCount === 1 ? "RSVP" : "RSVPs"} onchain
             </p>
           ) : (
-            <p className="text-sm" style={{ color: "#0052FF" }}>Loading...</p>
+            <p className="text-sm" style={{ color: "#0052FF" }}>
+              Loading...
+            </p>
           )}
         </div>
 
-        {/* ── NAME INPUT ── */}
         {isConnected && (
           <div className="w-full max-w-md mb-6">
             <input
@@ -358,10 +417,12 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── RSVP BUTTON ── */}
         {!isConnected ? (
           <Wallet>
-            <ConnectWallet disconnectedLabel="RSVP on Base" className="cursor-pointer" />
+            <ConnectWallet
+              disconnectedLabel="RSVP on Base"
+              className="cursor-pointer"
+            />
           </Wallet>
         ) : (
           <>
@@ -374,7 +435,9 @@ export default function Home() {
             >
               {isAttesting ? "Attesting..." : "RSVP on Base"}
             </button>
+
             {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
+
             <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
               Connected: {address}
             </p>
@@ -385,7 +448,6 @@ export default function Home() {
           Power to the People. Onchain.
         </p>
 
-        {/* ── FOOTER CONTEXT ── */}
         <div
           className="w-full max-w-lg mt-12 pt-8 text-left"
           style={{ borderTop: "1px solid #e5e7eb" }}
@@ -401,12 +463,15 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mb-6" style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
+          <div
+            className="mb-6"
+            style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}
+          >
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              About BASE bloc
+              About BASE Bloc
             </p>
             <p className="text-xs leading-relaxed text-black">
-              BASE bloc is culture’s onchain community layer, built on Base. We turn
+              BASE Bloc is culture&apos;s onchain community layer, built on Base. We turn
               real-world participation into verified onchain records that connect everyone
               to the global onchain economy.
             </p>
@@ -414,7 +479,7 @@ export default function Home() {
 
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              Why RSVP with BASE bloc?
+              Why RSVP with BASE Bloc?
             </p>
             <p className="text-xs leading-relaxed text-black">
               Your RSVP isn&apos;t just a confirmation — it&apos;s a verified participation
@@ -424,8 +489,6 @@ export default function Home() {
             </p>
           </div>
         </div>
-        {/* ── END FOOTER ── */}
-
       </div>
     </div>
   );
