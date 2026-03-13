@@ -5,8 +5,7 @@ import { useAccount, useWalletClient } from "wagmi";
 import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
 import { Identity, Avatar, Name, Badge } from "@coinbase/onchainkit/identity";
 import { useName } from "@coinbase/onchainkit/identity";
-import { EAS, SchemaEncoder, NO_EXPIRATION } from "@ethereum-attestation-service/eas-sdk";
-import { BrowserProvider } from "ethers";
+import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import { base } from "viem/chains";
 
 const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
@@ -15,6 +14,9 @@ const SCHEMA_UID =
 
 const COINBASE_VERIFIED_SCHEMA_ID =
   "0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9";
+
+const BUILDER_CODE_DATA_SUFFIX =
+  "0x62635f37736474747335310b0080218021802180218021802180218021";
 
 const EVENT_DATE = new Date("2026-05-23T00:00:00");
 const EVENT_TIMESTAMP_UTC = BigInt(1779494400);
@@ -26,7 +28,7 @@ function getShortWalletLabel(address?: string) {
 
 function TopCornerBrand() {
   return (
-    <a
+    
       href="https://baseoak.org/"
       target="_blank"
       rel="noopener noreferrer"
@@ -205,11 +207,6 @@ export default function Home() {
     try {
       if (!walletClient) throw new Error("Wallet not connected");
 
-      const provider = new BrowserProvider(walletClient.transport);
-      const signer = await provider.getSigner();
-      const eas = new EAS(EAS_CONTRACT);
-      eas.connect(signer);
-
       const finalDisplayName =
         displayName.trim() || basename || getShortWalletLabel(address);
 
@@ -226,17 +223,117 @@ export default function Home() {
         { name: "displayName", value: finalDisplayName, type: "string" },
       ]);
 
-      const tx = await eas.attest({
-        schema: SCHEMA_UID,
-        data: {
-          recipient: address,
-          expirationTime: NO_EXPIRATION,
-          revocable: true,
-          data: encodedData,
-        },
+      const { encodeFunctionData } = await import("viem");
+
+      const callData = encodeFunctionData({
+        abi: [
+          {
+            name: "attest",
+            type: "function",
+            inputs: [
+              {
+                name: "request",
+                type: "tuple",
+                components: [
+                  { name: "schema", type: "bytes32" },
+                  {
+                    name: "data",
+                    type: "tuple",
+                    components: [
+                      { name: "recipient", type: "address" },
+                      { name: "expirationTime", type: "uint64" },
+                      { name: "revocable", type: "bool" },
+                      { name: "refUID", type: "bytes32" },
+                      { name: "data", type: "bytes" },
+                      { name: "value", type: "uint256" },
+                    ],
+                  },
+                ],
+              },
+            ],
+            outputs: [{ name: "", type: "bytes32" }],
+          },
+        ],
+        functionName: "attest",
+        args: [
+          {
+            schema: SCHEMA_UID as `0x${string}`,
+            data: {
+              recipient: address,
+              expirationTime: BigInt(0),
+              revocable: true,
+              refUID:
+                "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
+              data: encodedData as `0x${string}`,
+              value: BigInt(0),
+            },
+          },
+        ],
       });
 
-      const uid = await tx.wait();
+      const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
+
+      const txHash = await walletClient.request({
+        method: "wallet_sendCalls",
+        params: [
+          {
+            version: "1.0",
+            chainId: `0x${base.id.toString(16)}`,
+            calls: [
+              {
+                to: EAS_CONTRACT as `0x${string}`,
+                data: callData,
+                value: "0x0",
+              },
+            ],
+            capabilities: paymasterUrl
+              ? {
+                  paymasterService: {
+                    url: paymasterUrl,
+                  },
+                }
+              : {},
+            dataSuffix: BUILDER_CODE_DATA_SUFFIX,
+          },
+        ],
+      } as never);
+
+      // Poll EAS GraphQL for attestation UID
+      let uid = "";
+      for (let i = 0; i < 20; i++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        try {
+          const res = await fetch("https://base.easscan.org/graphql", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              query: `{
+                attestations(
+                  where: {
+                    schemaId: { equals: "${SCHEMA_UID}" }
+                    recipient: { equals: "${address}" }
+                  }
+                  orderBy: { timeCreated: desc }
+                  take: 1
+                ) {
+                  id
+                }
+              }`,
+            }),
+          });
+          const json = await res.json();
+          const found = json?.data?.attestations?.[0]?.id;
+          if (found) {
+            uid = found;
+            break;
+          }
+        } catch {
+          // keep polling
+        }
+      }
+
+      if (!uid) uid = txHash as string;
+
       setConfirmedDisplayName(finalDisplayName);
       setAttestationUID(uid);
       setScreen("confirmation");
@@ -294,7 +391,7 @@ export default function Home() {
             {attestationUID}
           </p>
 
-          <a
+          
             href={`https://base.easscan.org/attestation/view/${attestationUID}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -338,7 +435,7 @@ export default function Home() {
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
           Powered onchain by BASE bloc
         </p>
-        
+
         <p className="text-sm mb-6" style={{ color: "#0052FF" }}>
           May 23, 2026 — The Henry J. Kaiser Center for the Arts
         </p>
@@ -404,40 +501,40 @@ export default function Home() {
           </div>
         )}
 
-    {!isConnected ? (
-  <Wallet>
-    <ConnectWallet
-      disconnectedLabel="RSVP on Base"
-      className="cursor-pointer"
-    />
-  </Wallet>
-) : (
-  <>
-    <button
-      type="button"
-      onClick={handleRSVP}
-      disabled={isAttesting}
-      className="text-white px-8 py-4 rounded-full text-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      style={{ backgroundColor: "#0052FF" }}
-    >
-      {isAttesting ? "Attesting..." : "RSVP on Base"}
-    </button>
+        {!isConnected ? (
+          <Wallet>
+            <ConnectWallet
+              disconnectedLabel="RSVP on Base"
+              className="cursor-pointer"
+            />
+          </Wallet>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={handleRSVP}
+              disabled={isAttesting}
+              className="text-white px-8 py-4 rounded-full text-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: "#0052FF" }}
+            >
+              {isAttesting ? "Attesting..." : "RSVP on Base"}
+            </button>
 
-    {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
+            {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
 
-    <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
-      Connected: {address}
-    </p>
-  </>
-)}
+            <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
+              Connected: {address}
+            </p>
+          </>
+        )}
 
-<p className="mt-5 text-sm text-black max-w-md">
-  RSVP on Base and receive a verified participation record for this summit
-</p>
+        <p className="mt-5 text-sm text-black max-w-md">
+          RSVP on Base and receive a verified participation record for this summit
+        </p>
 
-<p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
-  Power to the People. Onchain.
-</p>
+        <p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
+          Power to the People. Onchain.
+        </p>
 
         <div
           className="w-full max-w-lg mt-12 pt-8 text-left"
@@ -462,7 +559,7 @@ export default function Home() {
               About BASE bloc
             </p>
             <p className="text-xs leading-relaxed text-black">
-              BASE bloc is culture’s onchain community layer, built on Base. We turn
+              BASE bloc is culture&apos;s onchain community layer, built on Base. We turn
               real-world participation into verified onchain records that connect everyone
               to the global onchain economy.
             </p>
