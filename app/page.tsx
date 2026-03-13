@@ -30,13 +30,13 @@ function TopCornerBrand() {
       href="https://baseoak.org/"
       target="_blank"
       rel="noopener noreferrer"
-      className="absolute top-4 right-4 md:top-6 md:right-6 hover:opacity-90 transition-opacity z-20"
+      className="absolute top-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:top-6 md:right-6 hover:opacity-90 transition-opacity z-20"
       aria-label="BASE - Oakland bloc"
     >
       <img
         src="/base-stamp.png"
         alt="BASE - Oakland bloc presents BASEbloc.app stamp"
-        className="block w-[88px] h-[88px] md:w-[130px] md:h-[130px] object-contain"
+        className="block w-[92px] h-[92px] md:w-[130px] md:h-[130px] object-contain"
       />
     </a>
   );
@@ -249,7 +249,7 @@ export default function Home() {
 
   if (screen === "confirmation") {
     return (
-      <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center px-8 py-12 relative">
+      <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center px-8 pt-32 pb-12 md:pt-12 relative">
         <TopCornerBrand />
         <div className="flex flex-col items-center max-w-lg">
           <h1 className="text-3xl font-bold mb-6 text-black">
@@ -318,7 +318,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center px-8 py-12 relative">
+    <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center px-8 pt-32 pb-12 md:pt-12 relative">
       <TopCornerBrand />
 
       <div className="flex flex-col items-center max-w-lg w-full">
