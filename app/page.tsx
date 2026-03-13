@@ -1,12 +1,3 @@
-Paste this in as your full `app/page.tsx`. It gives you:
-
-* a **small clickable stamp** linking to `baseoak.org`
-* **desktop version** in the top-right corner
-* **mobile version** inline under the main headline so it does **not overlap**
-* same stamp visible on **all screen sizes**
-* your earlier `bloc` wording changes preserved
-
-```tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -629,13 +620,3 @@ export default function Home() {
     </div>
   );
 }
-```
-
-The overlap fix is this:
-
-* desktop stamp: `hidden md:block absolute top-3 right-3`
-* mobile stamp: `md:hidden` and placed inline under the headline
-
-That prevents the stamp from fighting the title on narrow screens.
-
-For the exact worn rubber-stamp texture in your screenshot, this SVG is close in layout but still clean. To match the distressed look exactly, the better move is to use a transparent PNG or a more complex textured SVG.
