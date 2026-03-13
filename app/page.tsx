@@ -24,160 +24,88 @@ function getShortWalletLabel(address?: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function StampLogo({
-  className = "",
-  idPrefix = "stamp",
-}: {
-  className?: string;
-  idPrefix?: string;
-}) {
-  const topArcId = `${idPrefix}-top-arc`;
-  const bottomArcId = `${idPrefix}-bottom-arc`;
-
+function TopCornerBrand() {
   return (
     <a
       href="https://baseoak.org/"
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Visit baseoak.org"
-      className={className}
-      style={{ textDecoration: "none" }}
+      className="absolute top-4 right-4 md:top-6 md:right-6 hover:opacity-90 transition-opacity z-20"
+      aria-label="BASE Oakland Bloc"
     >
-      <svg
-        viewBox="0 0 220 220"
-        className="w-full h-auto"
-        role="img"
-        aria-hidden="true"
-      >
-        <defs>
-          <path id={topArcId} d="M 30 118 A 88 88 0 0 1 190 118" />
-          <path id={bottomArcId} d="M 190 118 A 88 88 0 0 1 30 118" />
-        </defs>
-
-        <circle
-          cx="110"
-          cy="110"
-          r="100"
-          fill="none"
-          stroke="#3B6FD8"
-          strokeWidth="4"
-        />
-        <circle
-          cx="110"
-          cy="110"
-          r="92"
-          fill="none"
-          stroke="#3B6FD8"
-          strokeWidth="2.75"
-        />
-
-        <path
-          d="M 45 98 A 67 67 0 0 1 175 98"
-          fill="none"
-          stroke="#3B6FD8"
-          strokeWidth="3"
-        />
-        <path
-          d="M 175 143 A 67 67 0 0 1 45 143"
-          fill="none"
-          stroke="#3B6FD8"
-          strokeWidth="3"
-        />
-
-        <text
-          fill="#3B6FD8"
-          fontSize="16"
-          fontWeight="700"
-          letterSpacing=".2"
-          fontFamily="Arial, sans-serif"
-        >
-          <textPath href={`#${topArcId}`} startOffset="50%" textAnchor="middle">
-            Base is for everyone
-          </textPath>
-        </text>
-
-        <text
-          fill="#3B6FD8"
-          fontSize="14"
-          fontWeight="700"
-          letterSpacing=".15"
-          fontFamily="Arial, sans-serif"
-        >
-          <textPath href={`#${bottomArcId}`} startOffset="50%" textAnchor="middle">
-            Power to the People. Onchain.
-          </textPath>
-        </text>
-
-        <g transform="rotate(-6 110 110)">
-          <text
-            x="110"
-            y="96"
-            textAnchor="middle"
-            fill="#0B1020"
-            fontSize="14"
-            fontWeight="700"
-            fontFamily="Arial, sans-serif"
-          >
-            BASE - Oakland bloc
-          </text>
-
-          <text
-            x="110"
-            y="120"
-            textAnchor="middle"
-            fill="#0B1020"
-            fontSize="18"
-            fontStyle="italic"
-            fontFamily="Arial, sans-serif"
-          >
-            presents
-          </text>
-
-          <text
-            x="110"
-            y="148"
-            textAnchor="middle"
-            fill="#3B6FD8"
-            fontSize="18"
-            fontWeight="700"
-            fontFamily="Arial, sans-serif"
-          >
-            BASEbloc.app
-          </text>
-        </g>
-      </svg>
+      <img
+        src="/base-stamp.png"
+        alt="BASE Oakland Bloc presents BASEBloc.app stamp"
+        className="block w-[88px] h-[88px] md:w-[130px] md:h-[130px] object-contain"
+      />
     </a>
   );
 }
 
-function TopCornerBrand() {
-  return (
-    <StampLogo
-      idPrefix="desktop-stamp"
-      className="absolute top-3 right-3 hidden md:block w-[92px] lg:w-[104px] xl:w-[116px] opacity-90 hover:opacity-100 transition-opacity"
-    />
-  );
+function useCountdown(target: Date) {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+
+  useEffect(() => {
+    function calc() {
+      const diff = target.getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
+    }
+
+    calc();
+    const id = setInterval(calc, 1000);
+    return () => clearInterval(id);
+  }, [target]);
+
+  return timeLeft;
 }
 
-function MobileStamp() {
-  return (
-    <div className="md:hidden w-full flex justify-center mb-3">
-      <StampLogo
-        idPrefix="mobile-stamp"
-        className="block w-[118px] opacity-90 hover:opacity-100 transition-opacity"
-      />
-    </div>
-  );
+function useRSVPCount() {
+  const [count, setCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchCount() {
+      try {
+        const res = await fetch("/api/rsvp-count", { cache: "no-store" });
+        if (!res.ok) throw new Error("Failed to fetch RSVP count");
+        const json = await res.json();
+        setCount(json?.count ?? 0);
+      } catch {
+        setCount(null);
+      }
+    }
+
+    fetchCount();
+    const id = setInterval(fetchCount, 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  return count;
 }
 
 function EveryoneWord() {
   return (
     <span className="relative inline-block whitespace-nowrap px-2">
       <span className="relative z-10">everyone</span>
+
       <svg
         aria-hidden="true"
         viewBox="0 0 320 120"
-        className="pointer-events-none absolute left-1/2 top-[54%] -translate-x-1/2 -translate-y-1/2 overflow-visible"
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-visible"
         style={{ width: "128%", height: "155%" }}
       >
         <ellipse
@@ -241,60 +169,6 @@ function EveryoneWord() {
   );
 }
 
-function useCountdown(target: Date) {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
-
-  useEffect(() => {
-    function calc() {
-      const diff = target.getTime() - Date.now();
-      if (diff <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-      setTimeLeft({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((diff / (1000 * 60)) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      });
-    }
-
-    calc();
-    const id = setInterval(calc, 1000);
-    return () => clearInterval(id);
-  }, [target]);
-
-  return timeLeft;
-}
-
-function useRSVPCount() {
-  const [count, setCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    async function fetchCount() {
-      try {
-        const res = await fetch("/api/rsvp-count", { cache: "no-store" });
-        if (!res.ok) throw new Error("Failed to fetch RSVP count");
-        const json = await res.json();
-        setCount(json?.count ?? 0);
-      } catch {
-        setCount(null);
-      }
-    }
-
-    fetchCount();
-    const id = setInterval(fetchCount, 30000);
-    return () => clearInterval(id);
-  }, []);
-
-  return count;
-}
-
 export default function Home() {
   const [screen, setScreen] = useState("landing");
   const [isAttesting, setIsAttesting] = useState(false);
@@ -333,7 +207,6 @@ export default function Home() {
 
       const provider = new BrowserProvider(walletClient.transport);
       const signer = await provider.getSigner();
-
       const eas = new EAS(EAS_CONTRACT);
       eas.connect(signer);
 
@@ -347,7 +220,7 @@ export default function Home() {
       const encodedData = schemaEncoder.encodeData([
         { name: "eventName", value: "MY CITY OUR MUSIC", type: "string" },
         { name: "eventDate", value: EVENT_TIMESTAMP_UTC, type: "uint64" },
-        { name: "coalition", value: "Oakland bloc", type: "string" },
+        { name: "coalition", value: "Oakland Bloc", type: "string" },
         { name: "attending", value: true, type: "bool" },
         { name: "ticketTier", value: "General", type: "string" },
         { name: "displayName", value: finalDisplayName, type: "string" },
@@ -376,11 +249,9 @@ export default function Home() {
 
   if (screen === "confirmation") {
     return (
-      <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center p-8 relative">
+      <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center px-8 py-12 relative">
         <TopCornerBrand />
         <div className="flex flex-col items-center max-w-lg">
-          <MobileStamp />
-
           <h1 className="text-3xl font-bold mb-6 text-black">
             You&apos;re in. Power to the People. Onchain.
           </h1>
@@ -423,17 +294,15 @@ export default function Home() {
             {attestationUID}
           </p>
 
-          {attestationUID && (
-            <a
-              href={`https://base.easscan.org/attestation/view/${attestationUID}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline mb-8 text-sm"
-              style={{ color: "#0052FF" }}
-            >
-              View your onchain record →
-            </a>
-          )}
+          <a
+            href={`https://base.easscan.org/attestation/view/${attestationUID}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline mb-8 text-sm"
+            style={{ color: "#0052FF" }}
+          >
+            View your onchain record →
+          </a>
 
           <button
             type="button"
@@ -449,15 +318,13 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center p-8 relative">
+    <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center px-8 py-12 relative">
       <TopCornerBrand />
 
       <div className="flex flex-col items-center max-w-lg w-full">
         <h1 className="text-4xl font-bold mb-2 text-black leading-tight">
           Base is for <EveryoneWord />
         </h1>
-
-        <MobileStamp />
 
         <p className="text-xl mb-2 font-semibold" style={{ color: "#0052FF" }}>
           Oakland bloc
@@ -468,9 +335,11 @@ export default function Home() {
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
           Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland bloc
         </p>
-
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
           Powered onchain by BASE bloc
+        </p>
+        <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
+          RSVP on Base and receive a verified participation record for this summit
         </p>
 
         <p className="text-sm mb-6" style={{ color: "#0052FF" }}>
@@ -558,22 +427,16 @@ export default function Home() {
             </button>
 
             {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
+
+            <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
+              Connected: {address}
+            </p>
           </>
         )}
 
-        <p className="mt-4 text-sm text-black">
-          RSVP on Base and receive a verified participation record for this summit
-        </p>
-
-        <p className="mt-4 text-sm" style={{ color: "#0052FF" }}>
+        <p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
           Power to the People. Onchain.
         </p>
-
-        {isConnected && (
-          <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
-            Connected: {address}
-          </p>
-        )}
 
         <div
           className="w-full max-w-lg mt-12 pt-8 text-left"
@@ -595,10 +458,10 @@ export default function Home() {
             style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}
           >
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              About BASE bloc
+              About BASE Bloc
             </p>
             <p className="text-xs leading-relaxed text-black">
-              BASE bloc is culture&apos;s onchain community layer, built on Base. We turn
+              BASE Bloc is culture’s onchain community layer, built on Base. We turn
               real-world participation into verified onchain records that connect everyone
               to the global onchain economy.
             </p>
@@ -606,13 +469,13 @@ export default function Home() {
 
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              Why RSVP with BASE bloc?
+              Why RSVP Onchain?
             </p>
             <p className="text-xs leading-relaxed text-black">
-              Your RSVP isn&apos;t just a confirmation — it&apos;s a verified participation
-              credential written to Base. This attestation is your permanent onchain record: proof
-              you were here, tied to your wallet, and portable across any app that reads it. No NFT.
-              No token. Just verified proof of participation.
+              Your RSVP isn&apos;t just a confirmation — it&apos;s a verified participation credential
+              written to Base. This attestation is your permanent onchain record: proof you were here,
+              tied to your wallet, and portable across any app that reads it. No NFT. No token. Just
+              verified proof of participation.
             </p>
           </div>
         </div>
