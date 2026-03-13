@@ -427,8 +427,10 @@ export default function Home() {
     RSVP on Base and receive a verified participation record for this summit
   </p>
 
-  {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
-
+  <p className="mt-5 text-sm text-black max-w-md">
+    RSVP on Base and receive a verified participation record for this summit
+  </p>
+           
   <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
     Connected: {address}
   </p>
