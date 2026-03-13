@@ -34,7 +34,7 @@ function TopCornerBrand() {
         className="hover:opacity-80 transition-opacity inline-flex flex-col items-center leading-tight"
         style={{ color: "inherit", textDecoration: "none" }}
       >
-        <span className="text-sm font-medium whitespace-nowrap">BASE - Oakland Bloc</span>
+        <span className="text-sm font-medium whitespace-nowrap">BASE - Oakland bloc</span>
         <span className="text-sm italic font-medium">presents</span>
         <span className="text-sm font-medium whitespace-nowrap" style={{ color: "#0052FF" }}>
           BASEbloc.app
@@ -44,12 +44,53 @@ function TopCornerBrand() {
   );
 }
 
+function EveryoneWord() {
+  return (
+    <span className="relative inline-block whitespace-nowrap px-2">
+      <span className="relative z-10">everyone</span>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 320 120"
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-visible"
+        style={{ width: "128%", height: "155%" }}
+      >
+        <ellipse
+          cx="160" cy="60" rx="145" ry="38"
+          fill="none" stroke="#0052FF" strokeWidth="4.5"
+          strokeLinecap="round" opacity="0.95"
+          transform="rotate(-3 160 60)"
+        />
+        <ellipse
+          cx="160" cy="60" rx="150" ry="42"
+          fill="none" stroke="#0052FF" strokeWidth="3.2"
+          strokeLinecap="round" opacity="0.82"
+          transform="rotate(2 160 60)"
+        />
+        <ellipse
+          cx="160" cy="60" rx="141" ry="35"
+          fill="none" stroke="#0052FF" strokeWidth="2.6"
+          strokeLinecap="round" opacity="0.72"
+          transform="rotate(-1 160 60)"
+        />
+        <ellipse
+          cx="160" cy="60" rx="154" ry="45"
+          fill="none" stroke="#0052FF" strokeWidth="2.2"
+          strokeLinecap="round" opacity="0.55"
+          transform="rotate(4 160 60)"
+        />
+        <path
+          d="M300 56c10 5 12 15 3 23"
+          fill="none" stroke="#0052FF" strokeWidth="3"
+          strokeLinecap="round" opacity="0.75"
+        />
+      </svg>
+    </span>
+  );
+}
+
 function useCountdown(target: Date) {
   const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
+    days: 0, hours: 0, minutes: 0, seconds: 0,
   });
 
   useEffect(() => {
@@ -111,7 +152,9 @@ export default function Home() {
   const rsvpCount = useRSVPCount();
 
   const nameQuery = useName(
-    address ? { address, chain: base } : ({ address: undefined as never, chain: base } as never)
+    address
+      ? { address, chain: base }
+      : ({ address: undefined as never, chain: base } as never)
   );
   const basename = nameQuery?.data ?? "";
 
@@ -222,28 +265,32 @@ export default function Home() {
       <TopCornerBrand />
 
       <div className="flex flex-col items-center max-w-lg w-full">
-        <h1 className="text-4xl font-bold mb-2 text-black">Base is for everyone</h1>
+
+        {/* ── HERO ── */}
+        <h1 className="text-4xl font-bold mb-2 text-black leading-tight">
+          Base is for <EveryoneWord />
+        </h1>
         <p className="text-xl mb-2 font-semibold" style={{ color: "#0052FF" }}>
-          Oakland Bloc
+          Oakland bloc
         </p>
         <p className="text-2xl font-bold mb-1 text-black">MY CITY OUR MUSIC</p>
 
-        {/* ── NEW CONTEXT BLOCK ── */}
+        {/* ── CONTEXT BLOCK ── */}
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland Bloc
+          Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland bloc
         </p>
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Powered onchain by BASE Bloc
+          Powered onchain by BASE bloc
         </p>
-        <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
+        <p className="text-xs mb-3" style={{ color: "#0052FF" }}>
           RSVP on Base and receive a verified participation record for this summit
         </p>
-        {/* ── END CONTEXT BLOCK ── */}
 
         <p className="text-sm mb-6" style={{ color: "#0052FF" }}>
           May 23, 2026 — The Henry J. Kaiser Center for the Arts
         </p>
 
+        {/* ── COUNTDOWN ── */}
         <div className="w-full flex justify-center gap-4 mb-6">
           {[
             { label: "Days", value: countdown.days },
@@ -265,24 +312,25 @@ export default function Home() {
           ))}
         </div>
 
+        {/* ── FLYER ── */}
         <img
           src="/event-flyer.png"
           alt="MY CITY OUR MUSIC summit flyer"
           className="w-full max-w-md mx-auto my-6 rounded-lg"
         />
 
+        {/* ── RSVP COUNT ── */}
         <div className="mb-4">
           {rsvpCount !== null ? (
             <p className="text-sm font-semibold" style={{ color: "#0052FF" }}>
               🔵 {rsvpCount} verified {rsvpCount === 1 ? "RSVP" : "RSVPs"} onchain
             </p>
           ) : (
-            <p className="text-sm" style={{ color: "#0052FF" }}>
-              Loading...
-            </p>
+            <p className="text-sm" style={{ color: "#0052FF" }}>Loading...</p>
           )}
         </div>
 
+        {/* ── NAME INPUT ── */}
         {isConnected && (
           <div className="w-full max-w-md mb-6">
             <input
@@ -305,6 +353,7 @@ export default function Home() {
           </div>
         )}
 
+        {/* ── RSVP BUTTON ── */}
         {!isConnected ? (
           <Wallet>
             <ConnectWallet disconnectedLabel="RSVP on Base" className="cursor-pointer" />
@@ -331,7 +380,7 @@ export default function Home() {
           Power to the People. Onchain.
         </p>
 
-        {/* ── FOOTER CONTEXT SECTION ── */}
+        {/* ── FOOTER CONTEXT ── */}
         <div
           className="w-full max-w-lg mt-12 pt-8 text-left"
           style={{ borderTop: "1px solid #e5e7eb" }}
@@ -349,28 +398,28 @@ export default function Home() {
 
           <div className="mb-6" style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              About BASE Bloc
+              About BASE bloc
             </p>
             <p className="text-xs leading-relaxed text-black">
-              BASE Bloc is Oakland&apos;s onchain community layer — built on Base. We convert
-              real-world cultural participation into verified onchain records, connecting Oakland&apos;s
-              creative community to the global economy of the internet.
+              BASE bloc is culture’s onchain community layer, built on Base. We turn
+              real-world participation into verified onchain records that connect everyone
+              to the global onchain economy.
             </p>
           </div>
 
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              Why RSVP Onchain?
+              Why RSVP with BASE bloc?
             </p>
             <p className="text-xs leading-relaxed text-black">
-              Your RSVP isn&apos;t just a confirmation — it&apos;s a verified participation credential
-              written to Base. This attestation is your permanent onchain record: proof you were here,
-              tied to your wallet, and portable across any app that reads it. No NFT. No token. Just
-              verified proof of participation.
+              Your RSVP isn&apos;t just a confirmation — it&apos;s a verified participation
+              credential written to Base. This attestation is your permanent onchain record: proof
+              you were here, tied to your wallet, and portable across any app that reads it. No NFT.
+              No token. Just verified proof of participation.
             </p>
           </div>
         </div>
-        {/* ── END FOOTER CONTEXT SECTION ── */}
+        {/* ── END FOOTER ── */}
 
       </div>
     </div>
