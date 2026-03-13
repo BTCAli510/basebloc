@@ -293,7 +293,7 @@ export default function Home() {
           <p className="text-sm mb-2 break-all font-mono" style={{ color: "#0052FF" }}>
             {attestationUID}
           </p>
-          
+          <a
             href={`https://base.easscan.org/attestation/view/${attestationUID}`}
             target="_blank"
             rel="noopener noreferrer"
