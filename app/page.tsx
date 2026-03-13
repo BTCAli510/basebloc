@@ -1,3 +1,12 @@
+Paste this in as your full `app/page.tsx`. It gives you:
+
+* a **small clickable stamp** linking to `baseoak.org`
+* **desktop version** in the top-right corner
+* **mobile version** inline under the main headline so it does **not overlap**
+* same stamp visible on **all screen sizes**
+* your earlier `bloc` wording changes preserved
+
+```tsx
 'use client';
 
 import { useState, useEffect } from "react";
@@ -24,27 +33,148 @@ function getShortWalletLabel(address?: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function StampLogo({
+  className = "",
+  idPrefix = "stamp",
+}: {
+  className?: string;
+  idPrefix?: string;
+}) {
+  const topArcId = `${idPrefix}-top-arc`;
+  const bottomArcId = `${idPrefix}-bottom-arc`;
+
+  return (
+    <a
+      href="https://baseoak.org/"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Visit baseoak.org"
+      className={className}
+      style={{ textDecoration: "none" }}
+    >
+      <svg
+        viewBox="0 0 220 220"
+        className="w-full h-auto"
+        role="img"
+        aria-hidden="true"
+      >
+        <defs>
+          <path id={topArcId} d="M 30 118 A 88 88 0 0 1 190 118" />
+          <path id={bottomArcId} d="M 190 118 A 88 88 0 0 1 30 118" />
+        </defs>
+
+        <circle
+          cx="110"
+          cy="110"
+          r="100"
+          fill="none"
+          stroke="#3B6FD8"
+          strokeWidth="4"
+        />
+        <circle
+          cx="110"
+          cy="110"
+          r="92"
+          fill="none"
+          stroke="#3B6FD8"
+          strokeWidth="2.75"
+        />
+
+        <path
+          d="M 45 98 A 67 67 0 0 1 175 98"
+          fill="none"
+          stroke="#3B6FD8"
+          strokeWidth="3"
+        />
+        <path
+          d="M 175 143 A 67 67 0 0 1 45 143"
+          fill="none"
+          stroke="#3B6FD8"
+          strokeWidth="3"
+        />
+
+        <text
+          fill="#3B6FD8"
+          fontSize="16"
+          fontWeight="700"
+          letterSpacing=".2"
+          fontFamily="Arial, sans-serif"
+        >
+          <textPath href={`#${topArcId}`} startOffset="50%" textAnchor="middle">
+            Base is for everyone
+          </textPath>
+        </text>
+
+        <text
+          fill="#3B6FD8"
+          fontSize="14"
+          fontWeight="700"
+          letterSpacing=".15"
+          fontFamily="Arial, sans-serif"
+        >
+          <textPath href={`#${bottomArcId}`} startOffset="50%" textAnchor="middle">
+            Power to the People. Onchain.
+          </textPath>
+        </text>
+
+        <g transform="rotate(-6 110 110)">
+          <text
+            x="110"
+            y="96"
+            textAnchor="middle"
+            fill="#0B1020"
+            fontSize="14"
+            fontWeight="700"
+            fontFamily="Arial, sans-serif"
+          >
+            BASE - Oakland bloc
+          </text>
+
+          <text
+            x="110"
+            y="120"
+            textAnchor="middle"
+            fill="#0B1020"
+            fontSize="18"
+            fontStyle="italic"
+            fontFamily="Arial, sans-serif"
+          >
+            presents
+          </text>
+
+          <text
+            x="110"
+            y="148"
+            textAnchor="middle"
+            fill="#3B6FD8"
+            fontSize="18"
+            fontWeight="700"
+            fontFamily="Arial, sans-serif"
+          >
+            BASEbloc.app
+          </text>
+        </g>
+      </svg>
+    </a>
+  );
+}
+
 function TopCornerBrand() {
   return (
-    <div className="absolute top-4 right-4 text-black">
-      <a
-        href="https://baseoak.org/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="hover:opacity-80 transition-opacity inline-flex flex-col items-center leading-tight"
-        style={{ color: "inherit", textDecoration: "none" }}
-      >
-        <span className="text-sm font-medium whitespace-nowrap">
-          BASE - Oakland bloc
-        </span>
-        <span className="text-sm italic font-medium">presents</span>
-        <span
-          className="text-sm font-medium whitespace-nowrap"
-          style={{ color: "#0052FF" }}
-        >
-          BASEbloc.app
-        </span>
-      </a>
+    <StampLogo
+      idPrefix="desktop-stamp"
+      className="absolute top-3 right-3 hidden md:block w-[92px] lg:w-[104px] xl:w-[116px] opacity-90 hover:opacity-100 transition-opacity"
+    />
+  );
+}
+
+function MobileStamp() {
+  return (
+    <div className="md:hidden w-full flex justify-center mb-3">
+      <StampLogo
+        idPrefix="mobile-stamp"
+        className="block w-[118px] opacity-90 hover:opacity-100 transition-opacity"
+      />
     </div>
   );
 }
@@ -258,6 +388,8 @@ export default function Home() {
       <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center p-8 relative">
         <TopCornerBrand />
         <div className="flex flex-col items-center max-w-lg">
+          <MobileStamp />
+
           <h1 className="text-3xl font-bold mb-6 text-black">
             You&apos;re in. Power to the People. Onchain.
           </h1>
@@ -333,6 +465,8 @@ export default function Home() {
         <h1 className="text-4xl font-bold mb-2 text-black leading-tight">
           Base is for <EveryoneWord />
         </h1>
+
+        <MobileStamp />
 
         <p className="text-xl mb-2 font-semibold" style={{ color: "#0052FF" }}>
           Oakland bloc
@@ -495,3 +629,13 @@ export default function Home() {
     </div>
   );
 }
+```
+
+The overlap fix is this:
+
+* desktop stamp: `hidden md:block absolute top-3 right-3`
+* mobile stamp: `md:hidden` and placed inline under the headline
+
+That prevents the stamp from fighting the title on narrow screens.
+
+For the exact worn rubber-stamp texture in your screenshot, this SVG is close in layout but still clean. To match the distressed look exactly, the better move is to use a transparent PNG or a more complex textured SVG.
