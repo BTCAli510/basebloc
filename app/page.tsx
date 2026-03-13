@@ -31,11 +31,11 @@ function TopCornerBrand() {
       target="_blank"
       rel="noopener noreferrer"
       className="absolute top-4 right-4 md:top-6 md:right-6 hover:opacity-90 transition-opacity z-20"
-      aria-label="BASE Oakland Bloc"
+      aria-label="BASE - Oakland bloc"
     >
       <img
         src="/base-stamp.png"
-        alt="BASE Oakland Bloc presents BASEBloc.app stamp"
+        alt="BASE - Oakland bloc presents BASEbloc.app stamp"
         className="block w-[88px] h-[88px] md:w-[130px] md:h-[130px] object-contain"
       />
     </a>
@@ -220,7 +220,7 @@ export default function Home() {
       const encodedData = schemaEncoder.encodeData([
         { name: "eventName", value: "MY CITY OUR MUSIC", type: "string" },
         { name: "eventDate", value: EVENT_TIMESTAMP_UTC, type: "uint64" },
-        { name: "coalition", value: "Oakland Bloc", type: "string" },
+        { name: "coalition", value: "Oakland bloc", type: "string" },
         { name: "attending", value: true, type: "bool" },
         { name: "ticketTier", value: "General", type: "string" },
         { name: "displayName", value: finalDisplayName, type: "string" },
@@ -458,10 +458,10 @@ export default function Home() {
             style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}
           >
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              About BASE Bloc
+              About BASE bloc
             </p>
             <p className="text-xs leading-relaxed text-black">
-              BASE Bloc is culture’s onchain community layer, built on Base. We turn
+              BASE bloc is culture’s onchain community layer, built on Base. We turn
               real-world participation into verified onchain records that connect everyone
               to the global onchain economy.
             </p>
