@@ -338,10 +338,7 @@ export default function Home() {
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
           Powered onchain by BASE bloc
         </p>
-        <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          RSVP on Base and receive a verified participation record for this summit
-        </p>
-
+        
         <p className="text-sm mb-6" style={{ color: "#0052FF" }}>
           May 23, 2026 — The Henry J. Kaiser Center for the Arts
         </p>
@@ -415,23 +412,27 @@ export default function Home() {
             />
           </Wallet>
         ) : (
-          <>
-            <button
-              type="button"
-              onClick={handleRSVP}
-              disabled={isAttesting}
-              className="text-white px-8 py-4 rounded-full text-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: "#0052FF" }}
-            >
-              {isAttesting ? "Attesting..." : "RSVP on Base"}
-            </button>
+         <>
+  <button
+    type="button"
+    onClick={handleRSVP}
+    disabled={isAttesting}
+    className="text-white px-8 py-4 rounded-full text-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+    style={{ backgroundColor: "#0052FF" }}
+  >
+    {isAttesting ? "Attesting..." : "RSVP on Base"}
+  </button>
 
-            {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
+  <p className="mt-5 text-sm text-black max-w-md">
+    RSVP on Base and receive a verified participation record for this summit
+  </p>
 
-            <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
-              Connected: {address}
-            </p>
-          </>
+  {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
+
+  <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
+    Connected: {address}
+  </p>
+</>
         )}
 
         <p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
