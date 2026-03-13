@@ -17,7 +17,7 @@ const COINBASE_VERIFIED_SCHEMA_ID =
   "0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9";
 
 const EVENT_DATE = new Date("2026-05-23T00:00:00");
-const EVENT_TIMESTAMP_UTC = BigInt(1779494400); // 2026-05-23 00:00:00 UTC
+const EVENT_TIMESTAMP_UTC = BigInt(1779494400);
 
 function getShortWalletLabel(address?: string) {
   if (!address) return "Guest";
@@ -27,7 +27,7 @@ function getShortWalletLabel(address?: string) {
 function TopCornerBrand() {
   return (
     <div className="absolute top-4 right-4 text-black">
-      <a
+      
         href="https://baseoak.org/"
         target="_blank"
         rel="noopener noreferrer"
@@ -36,7 +36,9 @@ function TopCornerBrand() {
       >
         <span className="text-sm font-medium whitespace-nowrap">BASE - Oakland Bloc</span>
         <span className="text-sm italic font-medium">presents</span>
-        <span className="text-sm font-medium whitespace-nowrap">BASE BLOC</span>
+        <span className="text-sm font-medium whitespace-nowrap" style={{ color: "#0052FF" }}>
+          BASEbloc.app
+        </span>
       </a>
     </div>
   );
@@ -57,7 +59,6 @@ function useCountdown(target: Date) {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         return;
       }
-
       setTimeLeft({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
@@ -65,7 +66,6 @@ function useCountdown(target: Date) {
         seconds: Math.floor((diff / 1000) % 60),
       });
     }
-
     calc();
     const id = setInterval(calc, 1000);
     return () => clearInterval(id);
@@ -80,19 +80,14 @@ function useRSVPCount() {
   useEffect(() => {
     async function fetchCount() {
       try {
-        const res = await fetch("/api/rsvp-count", {
-          cache: "no-store",
-        });
-
+        const res = await fetch("/api/rsvp-count", { cache: "no-store" });
         if (!res.ok) throw new Error("Failed to fetch RSVP count");
-
         const json = await res.json();
         setCount(json?.count ?? 0);
       } catch {
         setCount(null);
       }
     }
-
     fetchCount();
     const id = setInterval(fetchCount, 30000);
     return () => clearInterval(id);
@@ -128,26 +123,19 @@ export default function Home() {
 
   async function handleRSVP() {
     if (!address) return;
-
     setIsAttesting(true);
     setError("");
-
     try {
       if (!walletClient) throw new Error("Wallet not connected");
-
       const provider = new BrowserProvider(walletClient.transport);
       const signer = await provider.getSigner();
-
       const eas = new EAS(EAS_CONTRACT);
       eas.connect(signer);
-
       const finalDisplayName =
         displayName.trim() || basename || getShortWalletLabel(address);
-
       const schemaEncoder = new SchemaEncoder(
         "string eventName,uint64 eventDate,string coalition,bool attending,string ticketTier,string displayName"
       );
-
       const encodedData = schemaEncoder.encodeData([
         { name: "eventName", value: "MY CITY OUR MUSIC", type: "string" },
         { name: "eventDate", value: EVENT_TIMESTAMP_UTC, type: "uint64" },
@@ -156,7 +144,6 @@ export default function Home() {
         { name: "ticketTier", value: "General", type: "string" },
         { name: "displayName", value: finalDisplayName, type: "string" },
       ]);
-
       const tx = await eas.attest({
         schema: SCHEMA_UID,
         data: {
@@ -166,7 +153,6 @@ export default function Home() {
           data: encodedData,
         },
       });
-
       const uid = await tx.wait();
       setConfirmedDisplayName(finalDisplayName);
       setAttestationUID(uid);
@@ -182,12 +168,10 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center p-8 relative">
         <TopCornerBrand />
-
         <div className="flex flex-col items-center max-w-lg">
           <h1 className="text-3xl font-bold mb-6 text-black">
             You&apos;re in. Power to the People. Onchain.
           </h1>
-
           {address && (
             <div className="flex flex-col items-center mb-6">
               <Identity
@@ -195,33 +179,23 @@ export default function Home() {
                 schemaId={COINBASE_VERIFIED_SCHEMA_ID}
                 className="flex flex-col items-center"
               >
-                <Avatar
-                  address={address}
-                  chain={base}
-                  className="w-20 h-20 rounded-full mb-3"
-                />
-                <Name
-                  address={address}
-                  chain={base}
-                  className="font-semibold text-black text-lg"
-                >
+                <Avatar address={address} chain={base} className="w-20 h-20 rounded-full mb-3" />
+                <Name address={address} chain={base} className="font-semibold text-black text-lg">
                   <Badge />
                 </Name>
               </Identity>
-
               <p className="text-sm mt-2" style={{ color: "#0052FF" }}>
                 RSVP recorded as: {confirmedDisplayName}
               </p>
             </div>
           )}
-
           <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
             Verification Record
           </p>
           <p className="text-sm mb-2 break-all font-mono" style={{ color: "#0052FF" }}>
             {attestationUID}
           </p>
-          <a
+          
             href={`https://base.easscan.org/attestation/view/${attestationUID}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -253,9 +227,19 @@ export default function Home() {
           Oakland Bloc
         </p>
         <p className="text-2xl font-bold mb-1 text-black">MY CITY OUR MUSIC</p>
+
+        {/* ── NEW CONTEXT BLOCK ── */}
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Produced by Hip Hop TV &amp; Citiesabc · Powered onchain by BASE Bloc
+          Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland Bloc
         </p>
+        <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
+          Powered onchain by BASE Bloc
+        </p>
+        <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
+          RSVP on Base and receive a verified participation record for this summit
+        </p>
+        {/* ── END CONTEXT BLOCK ── */}
+
         <p className="text-sm mb-6" style={{ color: "#0052FF" }}>
           May 23, 2026 — The Henry J. Kaiser Center for the Arts
         </p>
@@ -346,6 +330,48 @@ export default function Home() {
         <p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
           Power to the People. Onchain.
         </p>
+
+        {/* ── FOOTER CONTEXT SECTION ── */}
+        <div
+          className="w-full max-w-lg mt-12 pt-8 text-left"
+          style={{ borderTop: "1px solid #e5e7eb" }}
+        >
+          <div className="mb-6">
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
+              About This Event
+            </p>
+            <p className="text-xs leading-relaxed text-black">
+              MY CITY OUR MUSIC is a music + creative industries + AI summit produced by Hip Hop TV
+              and Citiesabc. Bringing together artists, builders, and culture-makers at the Henry J.
+              Kaiser Center for the Arts in Oakland on May 23, 2026.
+            </p>
+          </div>
+
+          <div className="mb-6" style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
+              About BASE Bloc
+            </p>
+            <p className="text-xs leading-relaxed text-black">
+              BASE Bloc is Oakland&apos;s onchain community layer — built on Base. We convert
+              real-world cultural participation into verified onchain records, connecting Oakland&apos;s
+              creative community to the global economy of the internet.
+            </p>
+          </div>
+
+          <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
+              Why RSVP Onchain?
+            </p>
+            <p className="text-xs leading-relaxed text-black">
+              Your RSVP isn&apos;t just a confirmation — it&apos;s a verified participation credential
+              written to Base. This attestation is your permanent onchain record: proof you were here,
+              tied to your wallet, and portable across any app that reads it. No NFT. No token. Just
+              verified proof of participation.
+            </p>
+          </div>
+        </div>
+        {/* ── END FOOTER CONTEXT SECTION ── */}
+
       </div>
     </div>
   );
