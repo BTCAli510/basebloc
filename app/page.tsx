@@ -35,7 +35,7 @@ function TopCornerBrand() {
         style={{ color: "inherit", textDecoration: "none" }}
       >
         <span className="text-sm font-medium whitespace-nowrap">
-          BASE - Oakland Bloc
+          BASE - Oakland bloc
         </span>
         <span className="text-sm italic font-medium">presents</span>
         <span
@@ -56,7 +56,7 @@ function EveryoneWord() {
       <svg
         aria-hidden="true"
         viewBox="0 0 320 120"
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-visible"
+        className="pointer-events-none absolute left-1/2 top-[54%] -translate-x-1/2 -translate-y-1/2 overflow-visible"
         style={{ width: "128%", height: "155%" }}
       >
         <ellipse
@@ -226,7 +226,7 @@ export default function Home() {
       const encodedData = schemaEncoder.encodeData([
         { name: "eventName", value: "MY CITY OUR MUSIC", type: "string" },
         { name: "eventDate", value: EVENT_TIMESTAMP_UTC, type: "uint64" },
-        { name: "coalition", value: "Oakland Bloc", type: "string" },
+        { name: "coalition", value: "Oakland bloc", type: "string" },
         { name: "attending", value: true, type: "bool" },
         { name: "ticketTier", value: "General", type: "string" },
         { name: "displayName", value: finalDisplayName, type: "string" },
@@ -335,21 +335,17 @@ export default function Home() {
         </h1>
 
         <p className="text-xl mb-2 font-semibold" style={{ color: "#0052FF" }}>
-          Oakland Bloc
+          Oakland bloc
         </p>
 
         <p className="text-2xl font-bold mb-1 text-black">MY CITY OUR MUSIC</p>
 
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland Bloc
+          Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland bloc
         </p>
 
         <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Powered onchain by BASE Bloc
-        </p>
-
-        <p className="text-xs mb-3" style={{ color: "#0052FF" }}>
-          RSVP on Base and receive a verified participation record for this summit
+          Powered onchain by BASE bloc
         </p>
 
         <p className="text-sm mb-6" style={{ color: "#0052FF" }}>
@@ -437,16 +433,22 @@ export default function Home() {
             </button>
 
             {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
-
-            <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
-              Connected: {address}
-            </p>
           </>
         )}
 
-        <p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
+        <p className="mt-4 text-sm text-black">
+          RSVP on Base and receive a verified participation record for this summit
+        </p>
+
+        <p className="mt-4 text-sm" style={{ color: "#0052FF" }}>
           Power to the People. Onchain.
         </p>
+
+        {isConnected && (
+          <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
+            Connected: {address}
+          </p>
+        )}
 
         <div
           className="w-full max-w-lg mt-12 pt-8 text-left"
@@ -468,10 +470,10 @@ export default function Home() {
             style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}
           >
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              About BASE Bloc
+              About BASE bloc
             </p>
             <p className="text-xs leading-relaxed text-black">
-              BASE Bloc is culture&apos;s onchain community layer, built on Base. We turn
+              BASE bloc is culture&apos;s onchain community layer, built on Base. We turn
               real-world participation into verified onchain records that connect everyone
               to the global onchain economy.
             </p>
@@ -479,7 +481,7 @@ export default function Home() {
 
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">
-              Why RSVP with BASE Bloc?
+              Why RSVP with BASE bloc?
             </p>
             <p className="text-xs leading-relaxed text-black">
               Your RSVP isn&apos;t just a confirmation — it&apos;s a verified participation
