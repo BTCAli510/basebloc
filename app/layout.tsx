@@ -5,6 +5,9 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "MY CITY OUR MUSIC",
+  other: {
+    "base:app_id": "69a79ca414fc33c964120f9c",
+  },
 };
 
 export default function RootLayout({
