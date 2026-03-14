@@ -11,6 +11,7 @@ export function Providers({ children }: { children: ReactNode }) {
       config={{
         paymaster: process.env.NEXT_PUBLIC_PAYMASTER_URL,
       }}
+      miniKit={{ enabled: true }}
     >
       {children}
     </OnchainKitProvider>
