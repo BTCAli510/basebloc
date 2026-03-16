@@ -364,7 +364,7 @@ export default function Home() {
 
         {/* ── HERO: Event leads, brand supports ── */}
         <p className="text-xs font-bold tracking-widest uppercase mb-3 text-gray-500">
-          Oakland Bloc Presents
+          BASE Oakland Bloc Presents
         </p>
 
         <h1 className="text-4xl font-black mb-1 text-black leading-none tracking-tight">
@@ -384,7 +384,6 @@ export default function Home() {
           Base is for <EveryoneWord />
         </p>
 
-        {/* Partner / producer line — compressed to one line */}
         <p className="text-xs mb-6 text-gray-500">
           Produced by Hip Hop TV &amp; Citiesabc · Powered onchain by BASE Bloc
         </p>
@@ -415,20 +414,16 @@ export default function Home() {
           className="w-full max-w-md mx-auto my-6 rounded-lg"
         />
 
-        {/* ── TRUST BLOCK — moved above CTA where it does conversion work ── */}
-        <div className="w-full max-w-md mb-4 rounded-xl px-5 py-4 text-left"
+        {/* ── TRUST BLOCK — benefit-led, no crypto disclaimers ── */}
+        <div className="w-full max-w-md mb-6 rounded-xl px-5 py-4 text-left"
           style={{ backgroundColor: "#EEF4FF", border: "1px solid #C7D9FF" }}>
           <p className="text-sm font-bold text-black mb-1">More than a ticket.</p>
           <p className="text-xs text-gray-700 leading-relaxed">
-            Your RSVP creates a gasless, wallet-linked proof of participation on Base —
-            permanent proof you were here. No NFT. No token. No crypto experience needed.
+            Your RSVP creates a verified record that shows you were part of this moment. As BASE
+            Oakland Bloc grows, that record can help power community recognition, future access,
+            and opportunities for the people who showed up early.
           </p>
         </div>
-
-        {/* Trust strip */}
-        <p className="text-xs text-gray-500 mb-4 tracking-wide">
-          Free · Gasless · Verified onchain · You won&apos;t be charged gas to RSVP
-        </p>
 
         {/* RSVP count — shown only when meaningful, otherwise hidden */}
         {rsvpCount !== null && rsvpCount >= 5 && (
@@ -508,11 +503,13 @@ export default function Home() {
           </div>
 
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
-            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">Why RSVP Onchain?</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">Why This RSVP Matters</p>
             <p className="text-xs leading-relaxed text-gray-700">
               This RSVP gives you a wallet-linked record that proves you participated in this summit.
-              It&apos;s written permanently to Base, tied to your wallet, and readable by any app that
-              checks it. No NFT. No token. Just verified proof of participation.
+              It&apos;s written to Base, connected to your wallet, and readable anywhere that checks it.
+              As BASE Oakland Bloc grows, that record can become the foundation for community
+              recognition, future access, and opportunities built for people who showed up first.
+              No NFT. No token. Just verified proof of participation.
             </p>
           </div>
 
