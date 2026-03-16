@@ -150,7 +150,7 @@ export default function Home() {
       const encodedData = schemaEncoder.encodeData([
         { name: "eventName", value: "MY CITY OUR MUSIC", type: "string" },
         { name: "eventDate", value: EVENT_TIMESTAMP_UTC, type: "uint64" },
-        { name: "coalition", value: "Oakland Bloc", type: "string" },
+        { name: "coalition", value: "Oakland bloc", type: "string" },
         { name: "attending", value: true, type: "bool" },
         { name: "ticketTier", value: "General", type: "string" },
         { name: "displayName", value: finalDisplayName, type: "string" },
@@ -267,7 +267,7 @@ export default function Home() {
   // ── CONFIRMATION SCREEN ──
   if (screen === "confirmation") {
     const shareText = encodeURIComponent(
-      `Just claimed my onchain RSVP for MY CITY OUR MUSIC in Oakland — May 23, 2026. Verified proof of participation on Base, powered by BASE Bloc. 🔵`
+      `Just claimed my onchain RSVP for MY CITY OUR MUSIC in Oakland — May 23, 2026. Verified proof of participation on Base, powered by BASE bloc. 🔵`
     );
     const shareUrl = encodeURIComponent("https://basebloc.app");
 
@@ -364,7 +364,7 @@ export default function Home() {
 
         {/* ── HERO: Event leads, brand supports ── */}
         <p className="text-xs font-bold tracking-widest uppercase mb-3 text-gray-500">
-          BASE Oakland Bloc Presents
+          BASE Oakland bloc Presents
         </p>
 
         <h1 className="text-4xl font-black mb-1 text-black leading-none tracking-tight">
@@ -385,7 +385,7 @@ export default function Home() {
         </p>
 
         <p className="text-xs mb-6 text-gray-500">
-          Produced by Hip Hop TV &amp; Citiesabc · Powered onchain by BASE Bloc
+          Produced by Hip Hop TV &amp; Citiesabc · Powered onchain by BASE bloc
         </p>
 
         {/* Countdown timer */}
@@ -414,14 +414,14 @@ export default function Home() {
           className="w-full max-w-md mx-auto my-6 rounded-lg"
         />
 
-        {/* ── TRUST BLOCK — benefit-led, no crypto disclaimers ── */}
+        {/* ── TRUST K — benefit-led, no crypto disclaimers ── */}
         <div className="w-full max-w-md mb-6 rounded-xl px-5 py-4 text-left"
           style={{ backgroundColor: "#EEF4FF", border: "1px solid #C7D9FF" }}>
           <p className="text-sm font-bold text-black mb-1">More than a ticket.</p>
           <p className="text-xs text-gray-700 leading-relaxed">
             Your RSVP creates a verified record that shows you were part of this moment. As BASE
-            Oakland Bloc grows, that record can help power community recognition, future access,
-            and opportunities for the people who showed up early.
+            Oakland bloc grows, that record can help power community recognition, future access,
+            and opportunities for those who show up.
           </p>
         </div>
 
@@ -495,9 +495,9 @@ export default function Home() {
           </div>
 
           <div className="mb-6" style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
-            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">About BASE Bloc</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">About BASE bloc</p>
             <p className="text-xs leading-relaxed text-gray-700">
-              BASE Bloc helps communities turn real-world participation into verified onchain
+              BASE bloc helps communities turn real-world participation into verified onchain
               records on Base — connecting everyone to the global onchain economy, one action at a time.
             </p>
           </div>
@@ -505,10 +505,10 @@ export default function Home() {
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">Why This RSVP Matters</p>
             <p className="text-xs leading-relaxed text-gray-700">
-              This RSVP gives you a wallet-linked record that proves you participated in this summit.
-              It&apos;s written to Base, connected to your wallet, and readable anywhere that checks it.
-              As BASE Oakland Bloc grows, that record can become the foundation for community
-              recognition, future access, and opportunities built for people who showed up first.
+            This RSVP creates a wallet-linked record proving you participated in this summit. 
+    It&apos;s written to Base and readable by any app that supports it. As BASE bloc 
+    grows, this record becomes the foundation for community recognition, future access, 
+    and opportunities built for the people who show up.
               No NFT. No token. Just verified proof of participation.
             </p>
           </div>
