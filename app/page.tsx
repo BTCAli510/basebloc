@@ -27,10 +27,10 @@ function getShortWalletLabel(address?: string) {
 }
 
 function TopCornerBrand() {
-return (
-<a
-href="https://baseoak.org/"
-target="_blank"
+  return (
+    <a
+      href="https://baseoak.org/"
+      target="_blank"
       rel="noopener noreferrer"
       className="absolute top-4 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:top-6 md:right-6 hover:opacity-90 transition-opacity z-20"
       aria-label="BASE - Oakland bloc"
@@ -264,14 +264,26 @@ export default function Home() {
     }
   }
 
+  // ── CONFIRMATION SCREEN ──
   if (screen === "confirmation") {
+    const shareText = encodeURIComponent(
+      `Just claimed my onchain RSVP for MY CITY OUR MUSIC in Oakland — May 23, 2026. Verified proof of participation on Base, powered by BASE Bloc. 🔵`
+    );
+    const shareUrl = encodeURIComponent("https://basebloc.app");
+
     return (
       <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center px-8 pt-32 pb-12 md:pt-12 relative">
         <TopCornerBrand />
-        <div className="flex flex-col items-center max-w-lg">
-          <h1 className="text-3xl font-bold mb-6 text-black">
-            You&apos;re in. Power to the People. Onchain.
+        <div className="flex flex-col items-center max-w-lg w-full">
+
+          {/* Confirmation headline — completion first, culture second */}
+          <h1 className="text-3xl font-bold mb-2 text-black">
+            Your RSVP is confirmed.
           </h1>
+          <p className="text-sm mb-6 text-gray-600">
+            Your verified onchain participation record has been created.
+          </p>
+
           {address && (
             <div className="flex flex-col items-center mb-6">
               <Identity
@@ -289,7 +301,8 @@ export default function Home() {
               </p>
             </div>
           )}
-          <p className="text-xs mb-1" style={{ color: "#0052FF" }}>Verification Record</p>
+
+          <p className="text-xs mb-1 text-gray-500">Verification Record</p>
           <p className="text-sm mb-2 break-all font-mono" style={{ color: "#0052FF" }}>
             {attestationUID}
           </p>
@@ -297,52 +310,86 @@ export default function Home() {
             href={`https://base.easscan.org/attestation/view/${attestationUID}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="underline mb-8 text-sm"
+            className="underline mb-6 text-sm"
             style={{ color: "#0052FF" }}
           >
             View your onchain record →
           </a>
-          <button
-            type="button"
-            onClick={() => setScreen("landing")}
-            className="text-white px-8 py-4 rounded-full text-lg cursor-pointer"
-            style={{ backgroundColor: "#0052FF" }}
-          >
-            Done
-          </button>
+
+          {/* Share buttons */}
+          <div className="w-full flex flex-col gap-3 mb-6 max-w-xs">
+            <a
+              href={`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full text-center px-6 py-3 rounded-full text-sm font-semibold border-2 transition-opacity hover:opacity-80"
+              style={{ borderColor: "#0052FF", color: "#0052FF" }}
+            >
+              Share on X
+            </a>
+            <a
+              href={`https://warpcast.com/~/compose?text=${shareText}&embeds[]=${shareUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full text-center px-6 py-3 rounded-full text-sm font-semibold border-2 transition-opacity hover:opacity-80"
+              style={{ borderColor: "#0052FF", color: "#0052FF" }}
+            >
+              Share on Farcaster
+            </a>
+            <button
+              type="button"
+              onClick={() => setScreen("landing")}
+              className="w-full text-white px-6 py-3 rounded-full text-sm font-semibold cursor-pointer transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "#0052FF" }}
+            >
+              Done
+            </button>
+          </div>
+
+          <p className="text-sm font-semibold" style={{ color: "#0052FF" }}>
+            Power to the People. Onchain.
+          </p>
+
         </div>
       </div>
     );
   }
 
+  // ── LANDING SCREEN ──
   return (
     <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center px-8 pt-32 pb-12 md:pt-12 relative">
       <TopCornerBrand />
 
       <div className="flex flex-col items-center max-w-lg w-full">
 
-        <h1 className="text-4xl font-bold mb-2 text-black leading-tight">
-          Base is for <EveryoneWord />
+        {/* ── HERO: Event leads, brand supports ── */}
+        <p className="text-xs font-bold tracking-widest uppercase mb-3 text-gray-500">
+          Oakland Bloc Presents
+        </p>
+
+        <h1 className="text-4xl font-black mb-1 text-black leading-none tracking-tight">
+          MY CITY OUR MUSIC
         </h1>
-        <p className="text-xl mb-2 font-semibold" style={{ color: "#0052FF" }}>
-          Oakland Bloc
-        </p>
-        <p className="text-2xl font-bold mb-1 text-black">MY CITY OUR MUSIC</p>
 
-        <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Produced by Hip Hop TV &amp; Citiesabc · Hosted in partnership with BASE - Oakland Bloc
-        </p>
-        <p className="text-xs mb-1" style={{ color: "#0052FF" }}>
-          Powered onchain by BASE Bloc
-        </p>
-        <p className="text-xs mb-3" style={{ color: "#0052FF" }}>
-          RSVP on Base and receive a verified participation record for this summit
+        <p className="text-base text-gray-600 mb-4 font-medium">
+          Music · Creative Industries · AI Summit
         </p>
 
-        <p className="text-sm mb-6" style={{ color: "#0052FF" }}>
-          May 23, 2026 — The Henry J. Kaiser Center for the Arts
+        <p className="text-sm font-semibold mb-4 text-black">
+          May 23, 2026 · Henry J. Kaiser Center for the Arts · Oakland
         </p>
 
+        {/* Brand line — now supporting, not leading */}
+        <p className="text-lg font-bold mb-1 text-black leading-tight">
+          Base is for <EveryoneWord />
+        </p>
+
+        {/* Partner / producer line — compressed to one line */}
+        <p className="text-xs mb-6 text-gray-500">
+          Produced by Hip Hop TV &amp; Citiesabc · Powered onchain by BASE Bloc
+        </p>
+
+        {/* Countdown timer */}
         <div className="w-full flex justify-center gap-4 mb-6">
           {[
             { label: "Days", value: countdown.days },
@@ -354,48 +401,65 @@ export default function Home() {
               <span className="text-3xl font-bold text-black w-14 text-center">
                 {String(value).padStart(2, "0")}
               </span>
-              <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#0052FF" }}>
+              <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">
                 {label}
               </span>
             </div>
           ))}
         </div>
 
+        {/* Event flyer */}
         <img
           src="/event-flyer.png"
           alt="MY CITY OUR MUSIC summit flyer"
           className="w-full max-w-md mx-auto my-6 rounded-lg"
         />
 
-        <div className="mb-4">
-          {rsvpCount !== null ? (
+        {/* ── TRUST BLOCK — moved above CTA where it does conversion work ── */}
+        <div className="w-full max-w-md mb-4 rounded-xl px-5 py-4 text-left"
+          style={{ backgroundColor: "#EEF4FF", border: "1px solid #C7D9FF" }}>
+          <p className="text-sm font-bold text-black mb-1">More than a ticket.</p>
+          <p className="text-xs text-gray-700 leading-relaxed">
+            Your RSVP creates a gasless, wallet-linked proof of participation on Base —
+            permanent proof you were here. No NFT. No token. No crypto experience needed.
+          </p>
+        </div>
+
+        {/* Trust strip */}
+        <p className="text-xs text-gray-500 mb-4 tracking-wide">
+          Free · Gasless · Verified onchain · You won&apos;t be charged gas to RSVP
+        </p>
+
+        {/* RSVP count — shown only when meaningful, otherwise hidden */}
+        {rsvpCount !== null && rsvpCount >= 5 && (
+          <div className="mb-4">
             <p className="text-sm font-semibold" style={{ color: "#0052FF" }}>
               🔵 {rsvpCount} verified {rsvpCount === 1 ? "RSVP" : "RSVPs"} onchain
             </p>
-          ) : (
-            <p className="text-sm" style={{ color: "#0052FF" }}>Loading...</p>
-          )}
-        </div>
+          </div>
+        )}
 
+        {/* Name input — shown only when connected */}
         {isConnected && (
           <div className="w-full max-w-md mb-6">
             <input
               type="text"
               value={displayName}
               onChange={(e) => { setDisplayName(e.target.value); setNameEdited(true); }}
-              placeholder={basename || "Name (optional)"}
+              placeholder={basename || "Your name on the onchain record"}
               className="w-full border rounded-full px-4 py-3 text-sm text-black outline-none focus:ring-2"
               style={{ borderColor: "#0052FF" }}
               maxLength={40}
             />
-            <p className="text-xs mt-2" style={{ color: "#0052FF" }}>
+            <p className="text-xs mt-2 text-gray-500">
               {basename
                 ? "Pre-filled from your Basename — edit freely"
-                : "Optional — leave blank to use your wallet name or address"}
+                : "Optional — leave blank to use your wallet address"}
             </p>
           </div>
         )}
 
+        {/* CTA */}
         {!isConnected ? (
           <Wallet>
             <ConnectWallet disconnectedLabel="RSVP on Base" className="cursor-pointer" />
@@ -406,49 +470,52 @@ export default function Home() {
               type="button"
               onClick={handleRSVP}
               disabled={isAttesting}
-              className="text-white px-8 py-4 rounded-full text-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-white px-8 py-4 rounded-full text-lg font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-opacity hover:opacity-90"
               style={{ backgroundColor: "#0052FF" }}
             >
               {isAttesting ? "Attesting..." : "RSVP on Base"}
             </button>
             {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
-            <p className="mt-4 text-sm break-all" style={{ color: "#0052FF" }}>
-              Connected: {address}
+            <p className="mt-3 text-xs text-gray-400">
+              Connected: {getShortWalletLabel(address)}
             </p>
           </>
         )}
 
-        <p className="mt-10 text-sm" style={{ color: "#0052FF" }}>
+        {/* Brand sign-off — moved to bottom, not stranded mid-page */}
+        <p className="mt-10 text-sm font-semibold" style={{ color: "#0052FF" }}>
           Power to the People. Onchain.
         </p>
 
         {/* ── FOOTER CONTEXT ── */}
         <div className="w-full max-w-lg mt-12 pt-8 text-left" style={{ borderTop: "1px solid #e5e7eb" }}>
+
           <div className="mb-6">
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">About This Event</p>
-            <p className="text-xs leading-relaxed text-black">
-              MY CITY OUR MUSIC is a music + creative industries + AI summit produced by Hip Hop TV
-              and Citiesabc. Bringing together artists, builders, and culture-makers at the Henry J.
-              Kaiser Center for the Arts in Oakland on May 23, 2026.
+            <p className="text-xs leading-relaxed text-gray-700">
+              MY CITY OUR MUSIC is a summit for artists, builders, and culture-makers exploring
+              music, creative industries, and AI in Oakland — brought together at the Henry J.
+              Kaiser Center for the Arts on May 23, 2026.
             </p>
           </div>
+
           <div className="mb-6" style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">About BASE Bloc</p>
-            <p className="text-xs leading-relaxed text-black">
-              BASE Bloc is culture&apos;s onchain community layer, built on Base. We turn
-              real-world participation into verified onchain records that connect everyone
-              to the global onchain economy.
+            <p className="text-xs leading-relaxed text-gray-700">
+              BASE Bloc helps communities turn real-world participation into verified onchain
+              records on Base — connecting everyone to the global onchain economy, one action at a time.
             </p>
           </div>
+
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">Why RSVP Onchain?</p>
-            <p className="text-xs leading-relaxed text-black">
-              Your RSVP isn&apos;t just a confirmation — it&apos;s a verified participation credential
-              written to Base. This attestation is your permanent onchain record: proof you were here,
-              tied to your wallet, and portable across any app that reads it. No NFT. No token. Just
-              verified proof of participation.
+            <p className="text-xs leading-relaxed text-gray-700">
+              This RSVP gives you a wallet-linked record that proves you participated in this summit.
+              It&apos;s written permanently to Base, tied to your wallet, and readable by any app that
+              checks it. No NFT. No token. Just verified proof of participation.
             </p>
           </div>
+
         </div>
 
       </div>
