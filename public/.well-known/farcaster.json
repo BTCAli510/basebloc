@@ -1,0 +1,17 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjMwNjQ2MDIsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhDYzIxOWRCZmQyOGMzQzllQzBBNjYxMjE0MjFEMDU4RTQ4N1U1ODA5In0",
+    "payload": "eyJkb21haW4iOiJiYXNlYmxvYy5hcHAifQ",
+    "signature": "MHg1MDAwZWU1M2I5ZjRlYWI3NWRjM2Y4ZjYyMDc1NzVjM2U4ZWIwMDYxMWExOWRkOWY2NWNlYzJhNzVhNzFkM2Q0NDZiNmVmYzEzMmVmMzgwYTZhMDc0MmQ3YjE4ZGMxNjhmOTFlYzZiZjVlMDg2NDhkNTk0YmY3ODU1NjU3MzVlYzFj"
+  },
+  "frame": {
+    "version": "1",
+    "name": "BASE Bloc",
+    "iconUrl": "https://basebloc.app/base-stamp.png",
+    "homeUrl": "https://basebloc.app",
+    "imageUrl": "https://basebloc.app/event-flyer.png",
+    "buttonTitle": "RSVP on Base",
+    "splashImageUrl": "https://basebloc.app/base-stamp.png",
+    "splashBackgroundColor": "#ffffff"
+  }
+}
