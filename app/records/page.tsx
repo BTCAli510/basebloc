@@ -302,17 +302,17 @@ export default function RecordsPage() {
 
         {/* Wallet */}
         {isConnected && address ? (
-          <Identity
-            address={address}
-            schemaId={COINBASE_VERIFIED_SCHEMA_ID}
-            style={{ display: "flex", alignItems: "center", gap: "8px" }}
-          >
-            <Avatar address={address} chain={base} style={{ width: "32px", height: "32px", borderRadius: "50%" }} />
-            <Name address={address} chain={base} style={{ fontSize: "13px", fontWeight: 600, color: "#0a0a0a" }}>
-              <Badge />
-            </Name>
-          </Identity>
-        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Identity
+              address={address}
+              schemaId={COINBASE_VERIFIED_SCHEMA_ID}
+            >
+              <Avatar address={address} chain={base} style={{ width: "32px", height: "32px", borderRadius: "50%" }} />
+              <Name address={address} chain={base} style={{ fontSize: "13px", fontWeight: 600, color: "#0a0a0a" }}>
+                <Badge />
+              </n>
+            </Identity>
+          </div>
           <Wallet>
             <ConnectWallet disconnectedLabel="Connect" className="cursor-pointer" />
           </Wallet>
