@@ -51,11 +51,12 @@ function formatDate(timestamp: number) {
 }
 
 function formatEventDate(unixTimestamp: number | string | boolean) {
-  const ts = typeof unixTimestamp === "string"
-    ? parseInt(unixTimestamp)
-    : typeof unixTimestamp === "number"
-    ? unixTimestamp
-    : 0;
+  const ts =
+    typeof unixTimestamp === "string"
+      ? parseInt(unixTimestamp)
+      : typeof unixTimestamp === "number"
+      ? unixTimestamp
+      : 0;
   if (!ts) return "";
   return new Date(ts * 1000).toLocaleDateString("en-US", {
     month: "long",
@@ -80,7 +81,6 @@ function RecordCard({ attestation }: { attestation: ReturnType<typeof parseAttes
         overflow: "hidden",
       }}
     >
-      {/* Blue accent bar */}
       <div
         style={{
           position: "absolute",
@@ -92,8 +92,6 @@ function RecordCard({ attestation }: { attestation: ReturnType<typeof parseAttes
           borderRadius: "16px 0 0 16px",
         }}
       />
-
-      {/* Top row: event name + tier badge */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
         <div>
           <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#0052FF", marginBottom: "3px" }}>
@@ -121,44 +119,34 @@ function RecordCard({ attestation }: { attestation: ReturnType<typeof parseAttes
           {ticketTier || "General"}
         </span>
       </div>
-
-      {/* Details */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", marginBottom: "14px" }}>
         {eventDate && (
           <span style={{ fontSize: "12px", color: "#555" }}>
-            📅 {formatEventDate(eventDate as number)}
+            {formatEventDate(eventDate as number)}
           </span>
         )}
         {coalition && (
           <span style={{ fontSize: "12px", color: "#555" }}>
-            🤝 {coalition}
+            {coalition}
           </span>
         )}
         {displayName && (
           <span style={{ fontSize: "12px", color: "#555" }}>
-            👤 {displayName}
+            {displayName}
           </span>
         )}
       </div>
-
-      {/* Footer: attested date + link */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <p style={{ fontSize: "11px", color: "#999", margin: 0 }}>
           Attested {formatDate(timeCreated)}
         </p>
         <a
-          href={`https://base.easscan.org/attestation/view/${id}`}
+          href={"https://base.easscan.org/attestation/view/" + id}
           target="_blank"
           rel="noopener noreferrer"
-          style={{
-            fontSize: "11px",
-            fontWeight: 600,
-            color: "#0052FF",
-            textDecoration: "none",
-            letterSpacing: "0.05em",
-          }}
+          style={{ fontSize: "11px", fontWeight: 600, color: "#0052FF", textDecoration: "none" }}
         >
-          View onchain record →
+          View onchain record
         </a>
       </div>
     </div>
@@ -210,7 +198,7 @@ function EmptyState() {
           textDecoration: "none",
         }}
       >
-        RSVP to MY CITY OUR MUSIC →
+        RSVP to MY CITY OUR MUSIC
       </a>
     </div>
   );
@@ -224,7 +212,6 @@ export default function RecordsPage() {
 
   useEffect(() => {
     if (!address) return;
-
     async function fetchAttestations() {
       setLoading(true);
       setError("");
@@ -233,20 +220,12 @@ export default function RecordsPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            query: `{
-              attestations(
-                where: {
-                  schemaId: { equals: "${SCHEMA_UID}" }
-                  recipient: { equals: "${address}" }
-                }
-                orderBy: { timeCreated: desc }
-                take: 20
-              ) {
-                id
-                timeCreated
-                decodedDataJson
-              }
-            }`,
+            query:
+              "{ attestations( where: { schemaId: { equals: \"" +
+              SCHEMA_UID +
+              "\" } recipient: { equals: \"" +
+              address +
+              "\" } } orderBy: { timeCreated: desc } take: 20 ) { id timeCreated decodedDataJson } }",
           }),
         });
         const json = await res.json();
@@ -254,12 +233,11 @@ export default function RecordsPage() {
         const parsed = raw.map(parseAttestation).filter(Boolean);
         setAttestations(parsed);
       } catch {
-        setError("Couldn't load your records. Please try again.");
+        setError("Could not load your records. Please try again.");
       } finally {
         setLoading(false);
       }
     }
-
     fetchAttestations();
   }, [address]);
 
@@ -272,7 +250,6 @@ export default function RecordsPage() {
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
-      {/* Header */}
       <div
         style={{
           borderBottom: "1px solid rgba(0,82,255,0.1)",
@@ -300,30 +277,22 @@ export default function RecordsPage() {
           </div>
         </div>
 
-        {/* Wallet */}
         {isConnected && address ? (
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Identity
-              address={address}
-              schemaId={COINBASE_VERIFIED_SCHEMA_ID}
-            >
+            <Identity address={address} schemaId={COINBASE_VERIFIED_SCHEMA_ID}>
               <Avatar address={address} chain={base} style={{ width: "32px", height: "32px", borderRadius: "50%" }} />
-              <Name address={address} chain={base} style={{ fontSize: "13px", fontWeight: 600, color: "#0a0a0a" }}>
-                <Badge />
-              </n>
+              <Name address={address} chain={base} style={{ fontSize: "13px", fontWeight: 600, color: "#0a0a0a" }} />
             </Identity>
           </div>
+        ) : (
           <Wallet>
             <ConnectWallet disconnectedLabel="Connect" className="cursor-pointer" />
           </Wallet>
         )}
       </div>
 
-      {/* Body */}
       <div style={{ maxWidth: "540px", margin: "0 auto", padding: "24px 20px 80px" }}>
-
         {!isConnected ? (
-          /* Not connected */
           <div style={{ textAlign: "center", padding: "64px 24px" }}>
             <div style={{ fontSize: "40px", marginBottom: "16px" }}>🔵</div>
             <h2 style={{ fontSize: "20px", fontWeight: 800, marginBottom: "8px" }}>
@@ -337,7 +306,6 @@ export default function RecordsPage() {
             </Wallet>
           </div>
         ) : loading ? (
-          /* Loading */
           <div style={{ textAlign: "center", padding: "64px 24px" }}>
             <div
               style={{
@@ -354,7 +322,6 @@ export default function RecordsPage() {
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         ) : error ? (
-          /* Error */
           <div style={{ textAlign: "center", padding: "48px 24px" }}>
             <p style={{ fontSize: "14px", color: "#b91c1c" }}>{error}</p>
             <button
@@ -365,14 +332,12 @@ export default function RecordsPage() {
             </button>
           </div>
         ) : (
-          /* Records */
           <>
             {attestations.length > 0 && (
               <p style={{ fontSize: "12px", color: "#999", marginBottom: "16px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 {attestations.length} verified {attestations.length === 1 ? "record" : "records"}
               </p>
             )}
-
             {attestations.length === 0 ? (
               <EmptyState />
             ) : (
@@ -382,7 +347,6 @@ export default function RecordsPage() {
         )}
       </div>
 
-      {/* Bottom nav hint */}
       <div
         style={{
           position: "fixed",
