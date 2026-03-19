@@ -5,6 +5,7 @@ import { useAccount, useWalletClient } from "wagmi";
 import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
 import { Identity, Avatar, Name, Badge } from "@coinbase/onchainkit/identity";
 import { useName } from "@coinbase/onchainkit/identity";
+import { useMiniKit } from "@coinbase/onchainkit/minikit";
 import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import { base } from "viem/chains";
 
@@ -121,6 +122,12 @@ export default function Home() {
   const { data: walletClient } = useWalletClient();
   const countdown = useCountdown(EVENT_DATE);
   const rsvpCount = useRSVPCount();
+
+  // ── MiniKit: signal frame ready to Base App ──
+  const { setFrameReady, isFrameReady } = useMiniKit();
+  useEffect(() => {
+    if (!isFrameReady) setFrameReady();
+  }, [isFrameReady, setFrameReady]);
 
   const nameQuery = useName(
     address
@@ -276,7 +283,6 @@ export default function Home() {
         <TopCornerBrand />
         <div className="flex flex-col items-center max-w-lg w-full">
 
-          {/* Confirmation headline — completion first, culture second */}
           <h1 className="text-3xl font-bold mb-2 text-black">
             Your RSVP is confirmed.
           </h1>
@@ -316,7 +322,6 @@ export default function Home() {
             View your onchain record →
           </a>
 
-          {/* Share buttons */}
           <div className="w-full flex flex-col gap-3 mb-6 max-w-xs">
             <a
               href={`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`}
@@ -362,7 +367,6 @@ export default function Home() {
 
       <div className="flex flex-col items-center max-w-lg w-full">
 
-        {/* ── HERO: Event leads, brand supports ── */}
         <p className="text-xs font-bold tracking-widest uppercase mb-3 text-gray-500">
           BASE Oakland bloc Presents
         </p>
@@ -379,7 +383,6 @@ export default function Home() {
           May 23, 2026 · Henry J. Kaiser Center for the Arts · Oakland
         </p>
 
-        {/* Brand line — now supporting, not leading */}
         <p className="text-lg font-bold mb-1 text-black leading-tight">
           Base is for <EveryoneWord />
         </p>
@@ -388,7 +391,6 @@ export default function Home() {
           Produced by Hip Hop TV &amp; Citiesabc · Powered onchain by BASE bloc
         </p>
 
-        {/* Countdown timer */}
         <div className="w-full flex justify-center gap-4 mb-6">
           {[
             { label: "Days", value: countdown.days },
@@ -407,14 +409,12 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Event flyer */}
         <img
           src="/event-flyer.png"
           alt="MY CITY OUR MUSIC summit flyer"
           className="w-full max-w-md mx-auto my-6 rounded-lg"
         />
 
-        {/* ── TRUST K — benefit-led, no crypto disclaimers ── */}
         <div className="w-full max-w-md mb-6 rounded-xl px-5 py-4 text-left"
           style={{ backgroundColor: "#EEF4FF", border: "1px solid #C7D9FF" }}>
           <p className="text-sm font-bold text-black mb-1">More than a ticket.</p>
@@ -425,7 +425,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* RSVP count — shown only when meaningful, otherwise hidden */}
         {rsvpCount !== null && rsvpCount >= 5 && (
           <div className="mb-4">
             <p className="text-sm font-semibold" style={{ color: "#0052FF" }}>
@@ -434,7 +433,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Name input — shown only when connected */}
         {isConnected && (
           <div className="w-full max-w-md mb-6">
             <input
@@ -454,7 +452,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* CTA */}
         {!isConnected ? (
           <Wallet>
             <ConnectWallet disconnectedLabel="RSVP on Base" className="cursor-pointer" />
@@ -477,12 +474,10 @@ export default function Home() {
           </>
         )}
 
-        {/* Brand sign-off — moved to bottom, not stranded mid-page */}
         <p className="mt-10 text-sm font-semibold" style={{ color: "#0052FF" }}>
           Power to the People. Onchain.
         </p>
 
-        {/* ── FOOTER CONTEXT ── */}
         <div className="w-full max-w-lg mt-12 pt-8 text-left" style={{ borderTop: "1px solid #e5e7eb" }}>
 
           <div className="mb-6">
@@ -505,10 +500,10 @@ export default function Home() {
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "1.5rem" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-2 text-black">Why This RSVP Matters</p>
             <p className="text-xs leading-relaxed text-gray-700">
-            This RSVP creates a wallet-linked record proving you participated in this summit. 
-    It&apos;s written to Base and readable by any app that supports it. As BASE bloc 
-    grows, this record becomes the foundation for community recognition, future access, 
-    and opportunities built for the people who show up.
+              This RSVP creates a wallet-linked record proving you participated in this summit.
+              It&apos;s written to Base and readable by any app that supports it. As BASE bloc
+              grows, this record becomes the foundation for community recognition, future access,
+              and opportunities built for the people who show up.
               No NFT. No token. Just verified proof of participation.
             </p>
           </div>
