@@ -11,7 +11,7 @@ import { base } from "viem/chains";
 
 const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
 const SCHEMA_UID =
-  "0xe75ec39ab8bfdd680f02b11817ed9e10556850278264c0917d645c73866784d9";
+  "0xb81941b702c7aacc8164f6fed9a3ff97bbf179131c9e4bedb040bd7d787da4f7";
 
 const COINBASE_VERIFIED_SCHEMA_ID =
   "0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9";
@@ -123,7 +123,6 @@ export default function Home() {
   const countdown = useCountdown(EVENT_DATE);
   const rsvpCount = useRSVPCount();
 
-  // ── MiniKit: signal frame ready to Base App ──
   const { setFrameReady, isFrameReady } = useMiniKit();
   useEffect(() => {
     if (!isFrameReady) setFrameReady();
@@ -151,16 +150,17 @@ export default function Home() {
       const finalDisplayName = displayName.trim() || basename || getShortWalletLabel(address);
 
       const schemaEncoder = new SchemaEncoder(
-        "string eventName,uint64 eventDate,string coalition,bool attending,string ticketTier,string displayName"
+        "string eventName,uint64 eventDate,string coalition,bool attending,string ticketTier,string displayName,bool verified_attendance"
       );
 
       const encodedData = schemaEncoder.encodeData([
         { name: "eventName", value: "MY CITY OUR MUSIC", type: "string" },
         { name: "eventDate", value: EVENT_TIMESTAMP_UTC, type: "uint64" },
-        { name: "coalition", value: "Oakland bloc", type: "string" },
+        { name: "coalition", value: "Oakland Bloc", type: "string" },
         { name: "attending", value: true, type: "bool" },
         { name: "ticketTier", value: "General", type: "string" },
         { name: "displayName", value: finalDisplayName, type: "string" },
+        { name: "verified_attendance", value: false, type: "bool" },
       ]);
 
       const { encodeFunctionData } = await import("viem");
@@ -271,7 +271,6 @@ export default function Home() {
     }
   }
 
-  // ── CONFIRMATION SCREEN ──
   if (screen === "confirmation") {
     const shareText = encodeURIComponent(
       `Just claimed my onchain RSVP for MY CITY OUR MUSIC in Oakland — May 23, 2026. Verified proof of participation on Base, powered by BASE bloc. 🔵`
@@ -313,18 +312,18 @@ export default function Home() {
             {attestationUID}
           </p>
           <a
-            href={`https://base.easscan.org/attestation/view/${attestationUID}`}
+            href={"https://base.easscan.org/attestation/view/" + attestationUID}
             target="_blank"
             rel="noopener noreferrer"
             className="underline mb-6 text-sm"
             style={{ color: "#0052FF" }}
           >
-            View your onchain record →
+            View your onchain record
           </a>
 
           <div className="w-full flex flex-col gap-3 mb-6 max-w-xs">
             <a
-              href={`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`}
+              href={"https://twitter.com/intent/tweet?text=" + shareText + "&url=" + shareUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center px-6 py-3 rounded-full text-sm font-semibold border-2 transition-opacity hover:opacity-80"
@@ -333,7 +332,7 @@ export default function Home() {
               Share on X
             </a>
             <a
-              href={`https://warpcast.com/~/compose?text=${shareText}&embeds[]=${shareUrl}`}
+              href={"https://warpcast.com/~/compose?text=" + shareText + "&embeds[]=" + shareUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full text-center px-6 py-3 rounded-full text-sm font-semibold border-2 transition-opacity hover:opacity-80"
@@ -360,7 +359,6 @@ export default function Home() {
     );
   }
 
-  // ── LANDING SCREEN ──
   return (
     <div className="min-h-screen bg-white text-black flex flex-col items-center justify-center text-center px-8 pt-32 pb-12 md:pt-12 relative">
       <TopCornerBrand />
