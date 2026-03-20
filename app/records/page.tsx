@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
-import { Identity, Avatar, Name, Badge } from "@coinbase/onchainkit/identity";
+import { Identity, Avatar, Name } from "@coinbase/onchainkit/identity";
 import { base } from "viem/chains";
 
 const SCHEMA_UID =
-  "0xe75ec39ab8bfdd680f02b11817ed9e10556850278264c0917d645c73866784d9";
+  "0xb81941b702c7aacc8164f6fed9a3ff97bbf179131c9e4bedb040bd7d787da4f7";
 
 const COINBASE_VERIFIED_SCHEMA_ID =
   "0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9";
@@ -36,6 +36,7 @@ function parseAttestation(attestation: Attestation) {
       attending: get("attending") as boolean,
       ticketTier: get("ticketTier") as string,
       displayName: get("displayName") as string,
+      verified_attendance: get("verified_attendance") as boolean,
     };
   } catch {
     return null;
@@ -67,7 +68,7 @@ function formatEventDate(unixTimestamp: number | string | boolean) {
 
 function RecordCard({ attestation }: { attestation: ReturnType<typeof parseAttestation> }) {
   if (!attestation) return null;
-  const { id, timeCreated, eventName, eventDate, coalition, ticketTier, displayName } = attestation;
+  const { id, timeCreated, eventName, eventDate, coalition, ticketTier, displayName, verified_attendance } = attestation;
 
   return (
     <div
@@ -88,36 +89,53 @@ function RecordCard({ attestation }: { attestation: ReturnType<typeof parseAttes
           top: 0,
           bottom: 0,
           width: "4px",
-          background: "#0052FF",
+          background: verified_attendance ? "#15803d" : "#0052FF",
           borderRadius: "16px 0 0 16px",
         }}
       />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
         <div>
-          <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#0052FF", marginBottom: "3px" }}>
-            Verified Participation
+          <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: verified_attendance ? "#15803d" : "#0052FF", marginBottom: "3px" }}>
+            {verified_attendance ? "Verified IRL Attendance" : "Verified Participation"}
           </p>
           <h3 style={{ fontSize: "17px", fontWeight: 800, color: "#0a0a0a", lineHeight: 1.2, margin: 0 }}>
             {eventName || "Event"}
           </h3>
         </div>
-        <span
-          style={{
-            fontSize: "10px",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            padding: "4px 10px",
-            borderRadius: "99px",
-            background: ticketTier === "VIP" ? "rgba(0,82,255,0.1)" : "#f0f4ff",
-            color: "#0052FF",
-            whiteSpace: "nowrap",
-            marginLeft: "12px",
-            flexShrink: 0,
-          }}
-        >
-          {ticketTier || "General"}
-        </span>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+          <span
+            style={{
+              fontSize: "10px",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              padding: "4px 10px",
+              borderRadius: "99px",
+              background: ticketTier === "VIP" ? "rgba(0,82,255,0.1)" : "#f0f4ff",
+              color: "#0052FF",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {ticketTier || "General"}
+          </span>
+          {verified_attendance && (
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                padding: "4px 10px",
+                borderRadius: "99px",
+                background: "rgba(21,128,61,0.1)",
+                color: "#15803d",
+                whiteSpace: "nowrap",
+              }}
+            >
+              OG Gate ✓
+            </span>
+          )}
+        </div>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", marginBottom: "14px" }}>
         {eventDate && (
