@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
 import { Identity, Avatar, Name, Badge } from "@coinbase/onchainkit/identity";
@@ -490,7 +490,7 @@ export default function AppPage() {
   const [activeTab, setActiveTab] = useState<Tab>("discover");
   const { address, isConnected } = useAccount();
 
-  const tabs: { id: Tab; label: string; icon: (active: boolean) => JSX.Element }[] = [
+  const tabs: { id: Tab; label: string; icon: (active: boolean) => React.ReactNode }[] = [
     { id: "discover", label: "Discover", icon: (a) => <IconDiscover active={a} /> },
     { id: "saved", label: "Saved", icon: (a) => <IconSaved active={a} /> },
     { id: "records", label: "Records", icon: (a) => <IconRecords active={a} /> },
