@@ -1,393 +1,366 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
-import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
-import { Identity, Avatar, Name } from "@coinbase/onchainkit/identity";
-import { base } from "viem/chains";
+// app/records/page.tsx
+//
+// Records screen — shows all verified participation records for the
+// connected wallet. Queries EAS GraphQL directly, decodes attestation
+// data, and displays each record as a participation card.
+//
+// Queries both schemas:
+//   Schema #1275 (live): RSVP + ticket attestations
+//   Schema #1179 (retired, read-only): early test attestations
 
-const SCHEMA_UID =
-  "0xb81941b702c7aacc8164f6fed9a3ff97bbf179131c9e4bedb040bd7d787da4f7";
+import { useState, useEffect, Suspense } from 'react';
+import { useAccount } from 'wagmi';
+import { Identity, Avatar, Name, Badge } from '@coinbase/onchainkit/identity';
+import { base } from 'wagmi/chains';
 
-const COINBASE_VERIFIED_SCHEMA_ID =
-  "0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9";
+// ─── Constants ────────────────────────────────────────────────────────────────
+const EAS_GRAPHQL = 'https://base.easscan.org/graphql';
+const SCHEMA_UID_LIVE    = '0xb81941b702c7aacc8164f6fed9a3ff97bbf179131c9e4bedb040bd7d787da4f7';
+const SCHEMA_UID_RETIRED = '0xe75ec39ab8bfdd680f02b11817ed9e10556850278264c0917d645c73866784d9';
+const CB_VERIFIED_SCHEMA = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
 
-interface Attestation {
-  id: string;
-  timeCreated: number;
+// ─── Types ────────────────────────────────────────────────────────────────────
+type RawAttestation = {
+  id:              string;
+  time:            number;
+  txid:            string;
+  schemaId:        string;
+  revoked:         boolean;
   decodedDataJson: string;
-}
+};
 
-interface DecodedField {
-  name: string;
-  value: { value: string | boolean | number };
-}
+type ParsedRecord = {
+  uid:          string;
+  time:         number;
+  txid:         string;
+  eventName:    string;
+  eventDate:    string;
+  venue:        string;
+  tier:         string;
+  attendeeName: string;
+  platform:     string;
+  isVip:        boolean;
+  schemaId:     string;
+  revoked:      boolean;
+};
 
-function parseAttestation(attestation: Attestation) {
-  try {
-    const fields: DecodedField[] = JSON.parse(attestation.decodedDataJson);
-    const get = (name: string) => fields.find((f) => f.name === name)?.value?.value ?? "";
-    return {
-      id: attestation.id,
-      timeCreated: attestation.timeCreated,
-      eventName: get("eventName") as string,
-      eventDate: get("eventDate"),
-      coalition: get("coalition") as string,
-      attending: get("attending") as boolean,
-      ticketTier: get("ticketTier") as string,
-      displayName: get("displayName") as string,
-      verified_attendance: get("verified_attendance") as boolean,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function formatDate(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatEventDate(unixTimestamp: number | string | boolean) {
-  const ts =
-    typeof unixTimestamp === "string"
-      ? parseInt(unixTimestamp)
-      : typeof unixTimestamp === "number"
-      ? unixTimestamp
-      : 0;
-  if (!ts) return "";
-  return new Date(ts * 1000).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function RecordCard({ attestation }: { attestation: ReturnType<typeof parseAttestation> }) {
-  if (!attestation) return null;
-  const { id, timeCreated, eventName, eventDate, coalition, ticketTier, displayName, verified_attendance } = attestation;
-
-  return (
-    <div
-      style={{
-        background: "#ffffff",
-        border: "1px solid rgba(0,82,255,0.15)",
-        borderRadius: "16px",
-        padding: "20px 24px",
-        marginBottom: "12px",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: "4px",
-          background: verified_attendance ? "#15803d" : "#0052FF",
-          borderRadius: "16px 0 0 16px",
-        }}
-      />
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-        <div>
-          <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: verified_attendance ? "#15803d" : "#0052FF", marginBottom: "3px" }}>
-            {verified_attendance ? "Verified IRL Attendance" : "Verified Participation"}
-          </p>
-          <h3 style={{ fontSize: "17px", fontWeight: 800, color: "#0a0a0a", lineHeight: 1.2, margin: 0 }}>
-            {eventName || "Event"}
-          </h3>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-          <span
-            style={{
-              fontSize: "10px",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              padding: "4px 10px",
-              borderRadius: "99px",
-              background: ticketTier === "VIP" ? "rgba(0,82,255,0.1)" : "#f0f4ff",
-              color: "#0052FF",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {ticketTier || "General"}
-          </span>
-          {verified_attendance && (
-            <span
-              style={{
-                fontSize: "10px",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                padding: "4px 10px",
-                borderRadius: "99px",
-                background: "rgba(21,128,61,0.1)",
-                color: "#15803d",
-                whiteSpace: "nowrap",
-              }}
-            >
-              OG Gate ✓
-            </span>
-          )}
-        </div>
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", marginBottom: "14px" }}>
-        {eventDate && (
-          <span style={{ fontSize: "12px", color: "#555" }}>
-            {formatEventDate(eventDate as number)}
-          </span>
-        )}
-        {coalition && (
-          <span style={{ fontSize: "12px", color: "#555" }}>
-            {coalition}
-          </span>
-        )}
-        {displayName && (
-          <span style={{ fontSize: "12px", color: "#555" }}>
-            {displayName}
-          </span>
-        )}
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <p style={{ fontSize: "11px", color: "#999", margin: 0 }}>
-          Attested {formatDate(timeCreated)}
-        </p>
-        <a
-          href={"https://base.easscan.org/attestation/view/" + id}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ fontSize: "11px", fontWeight: 600, color: "#0052FF", textDecoration: "none" }}
-        >
-          View onchain record
-        </a>
-      </div>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div
-      style={{
-        textAlign: "center",
-        padding: "48px 24px",
-        background: "#f8faff",
-        borderRadius: "16px",
-        border: "1px dashed rgba(0,82,255,0.2)",
-      }}
-    >
-      <div
-        style={{
-          width: "56px",
-          height: "56px",
-          background: "rgba(0,82,255,0.08)",
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          margin: "0 auto 16px",
-          fontSize: "24px",
-        }}
-      >
-        🔵
-      </div>
-      <h3 style={{ fontSize: "17px", fontWeight: 700, color: "#0a0a0a", marginBottom: "8px" }}>
-        No records yet
-      </h3>
-      <p style={{ fontSize: "13px", color: "#888", lineHeight: 1.6, maxWidth: "260px", margin: "0 auto 20px" }}>
-        Your verified onchain participation records will appear here after you RSVP to an event.
-      </p>
-      <a
-        href="/"
-        style={{
-          display: "inline-block",
-          background: "#0052FF",
-          color: "#fff",
-          fontSize: "13px",
-          fontWeight: 600,
-          padding: "10px 22px",
-          borderRadius: "99px",
-          textDecoration: "none",
-        }}
-      >
-        RSVP to MY CITY OUR MUSIC
-      </a>
-    </div>
-  );
-}
-
-export default function RecordsPage() {
-  const { address, isConnected } = useAccount();
-  const [attestations, setAttestations] = useState<ReturnType<typeof parseAttestation>[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!address) return;
-    async function fetchAttestations() {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await fetch("https://base.easscan.org/graphql", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            query:
-              "{ attestations( where: { schemaId: { equals: \"" +
-              SCHEMA_UID +
-              "\" } recipient: { equals: \"" +
-              address +
-              "\" } } orderBy: { timeCreated: desc } take: 20 ) { id timeCreated decodedDataJson } }",
-          }),
-        });
-        const json = await res.json();
-        const raw = json?.data?.attestations ?? [];
-        const parsed = raw.map(parseAttestation).filter(Boolean);
-        setAttestations(parsed);
-      } catch {
-        setError("Could not load your records. Please try again.");
-      } finally {
-        setLoading(false);
+// ─── GraphQL query ────────────────────────────────────────────────────────────
+const QUERY = `
+  query GetAttestations($recipient: String!, $schemaIds: [String!]!) {
+    attestations(
+      where: {
+        recipient: { equals: $recipient }
+        schemaId:  { in: $schemaIds }
+        revoked:   { equals: false }
       }
+      orderBy: { time: desc }
+    ) {
+      id
+      time
+      txid
+      schemaId
+      revoked
+      decodedDataJson
     }
-    fetchAttestations();
+  }
+`;
+
+// ─── Parse decoded attestation data ──────────────────────────────────────────
+function parseAttestation(raw: RawAttestation): ParsedRecord {
+  let fields: Record<string, string> = {};
+  try {
+    const decoded: Array<{ name: string; value: { value: unknown } }> =
+      JSON.parse(raw.decodedDataJson);
+    for (const f of decoded) {
+      fields[f.name] = String(f.value.value ?? '');
+    }
+  } catch {}
+
+  const tier = fields.tier ?? fields.ticketTier ?? '';
+  return {
+    uid:          raw.id,
+    time:         raw.time,
+    txid:         raw.txid,
+    eventName:    fields.eventName   ?? 'BASE Bloc Event',
+    eventDate:    fields.eventDate   ?? '',
+    venue:        fields.venue       ?? '',
+    tier,
+    attendeeName: fields.attendeeName ?? fields.displayName ?? '',
+    platform:     fields.platform    ?? 'basebloc.app',
+    isVip:        tier.toLowerCase().includes('vip'),
+    schemaId:     raw.schemaId,
+    revoked:      raw.revoked,
+  };
+}
+
+// ─── Format timestamp ─────────────────────────────────────────────────────────
+function formatDate(unix: number): string {
+  return new Date(unix * 1000).toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric',
+  });
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+function RecordsPageInner() {
+  const { address } = useAccount();
+
+  const [records,   setRecords]   = useState<ParsedRecord[]>([]);
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState<string | null>(null);
+  const [hasCBBadge, setHasCBBadge] = useState(false);
+
+  // ── Fetch attestations when wallet connects ──────────────────────────────
+  useEffect(() => {
+    if (!address) { setRecords([]); return; }
+
+    setLoading(true);
+    setError(null);
+
+    // Query BASE Bloc attestations
+    const blocFetch = fetch(EAS_GRAPHQL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: QUERY,
+        variables: {
+          recipient: address,
+          schemaIds: [SCHEMA_UID_LIVE, SCHEMA_UID_RETIRED],
+        },
+      }),
+    })
+      .then((r) => r.json())
+      .then((d) => (d.data?.attestations ?? []) as RawAttestation[]);
+
+    // Query Coinbase Verified Account badge (separate schema)
+    const cbFetch = fetch(EAS_GRAPHQL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: QUERY,
+        variables: {
+          recipient: address,
+          schemaIds: [CB_VERIFIED_SCHEMA],
+        },
+      }),
+    })
+      .then((r) => r.json())
+      .then((d) => (d.data?.attestations ?? []) as RawAttestation[]);
+
+    Promise.all([blocFetch, cbFetch])
+      .then(([blocAttestations, cbAttestations]) => {
+        const parsed = blocAttestations.map(parseAttestation);
+        setRecords(parsed);
+        setHasCBBadge(cbAttestations.length > 0);
+      })
+      .catch(() => setError('Failed to load records. Please try again.'))
+      .finally(() => setLoading(false));
+
   }, [address]);
 
+  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#ffffff",
-        color: "#0a0a0a",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}
-    >
-      <div
-        style={{
-          borderBottom: "1px solid rgba(0,82,255,0.1)",
-          padding: "16px 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          position: "sticky",
-          top: 0,
-          background: "#ffffff",
-          zIndex: 10,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <a href="/" style={{ textDecoration: "none" }}>
-            <img src="/base-stamp.png" alt="BASE Bloc" style={{ width: "36px", height: "36px", objectFit: "contain" }} />
-          </a>
-          <div>
-            <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#0052FF", margin: 0 }}>
-              BASE Bloc
-            </p>
-            <h1 style={{ fontSize: "15px", fontWeight: 800, margin: 0, color: "#0a0a0a" }}>
-              My Records
-            </h1>
-          </div>
-        </div>
+    <div style={s.page}>
+      <header style={s.header}>
+        <span style={s.logo}>BASE Bloc</span>
+        <span style={s.badge}>PARTICIPATION RECORDS</span>
+      </header>
 
-        {isConnected && address ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Identity address={address} schemaId={COINBASE_VERIFIED_SCHEMA_ID}>
-              <Avatar address={address} chain={base} style={{ width: "32px", height: "32px", borderRadius: "50%" }} />
-              <Name address={address} chain={base} style={{ fontSize: "13px", fontWeight: 600, color: "#0a0a0a" }} />
+      <main style={s.main}>
+        <h1 style={s.headline}>My Records</h1>
+        <p style={s.sub}>
+          Every event you've participated in is verified onchain and lives in your wallet permanently.
+        </p>
+
+        {/* ── Not connected ── */}
+        {!address && (
+          <div style={s.emptyCard}>
+            <div style={s.emptyIcon}>⬡</div>
+            <p style={s.emptyTitle}>Connect your wallet</p>
+            <p style={s.emptyDesc}>Connect your wallet above to view your verified participation records.</p>
+          </div>
+        )}
+
+        {/* ── Loading ── */}
+        {address && loading && (
+          <div style={s.emptyCard}>
+            <div style={s.spinner} />
+            <p style={s.emptyDesc}>Loading your records from Base…</p>
+          </div>
+        )}
+
+        {/* ── Error ── */}
+        {address && !loading && error && (
+          <div style={s.emptyCard}>
+            <p style={{ ...s.emptyTitle, color: '#DC2626' }}>Could not load records</p>
+            <p style={s.emptyDesc}>{error}</p>
+          </div>
+        )}
+
+        {/* ── Identity card (when connected + loaded) ── */}
+        {address && !loading && !error && (
+          <div style={s.identityCard}>
+            <Identity address={address} chain={base} schemaId={CB_VERIFIED_SCHEMA as `0x${string}`}>
+              <Avatar />
+              <div style={s.identityInfo}>
+                <span style={{ fontWeight: 700, fontSize: 16, color: "#111", display: "flex", alignItems: "center", gap: 6 }}><Name /><Badge /></span>
+                <p style={s.identityMeta}>
+                  {records.length} verified record{records.length !== 1 ? 's' : ''} on Base
+                  {hasCBBadge && ' · Coinbase Verified'}
+                </p>
+              </div>
             </Identity>
           </div>
-        ) : (
-          <Wallet>
-            <ConnectWallet disconnectedLabel="Connect" className="cursor-pointer" />
-          </Wallet>
         )}
-      </div>
 
-      <div style={{ maxWidth: "540px", margin: "0 auto", padding: "24px 20px 80px" }}>
-        {!isConnected ? (
-          <div style={{ textAlign: "center", padding: "64px 24px" }}>
-            <div style={{ fontSize: "40px", marginBottom: "16px" }}>🔵</div>
-            <h2 style={{ fontSize: "20px", fontWeight: 800, marginBottom: "8px" }}>
-              Connect your wallet
-            </h2>
-            <p style={{ fontSize: "14px", color: "#888", marginBottom: "24px", lineHeight: 1.6 }}>
-              Connect to see your verified onchain participation records.
+        {/* ── No records yet ── */}
+        {address && !loading && !error && records.length === 0 && (
+          <div style={s.emptyCard}>
+            <div style={s.emptyIcon}>○</div>
+            <p style={s.emptyTitle}>No records yet</p>
+            <p style={s.emptyDesc}>
+              RSVP to an event or purchase a ticket to create your first verified participation record.
             </p>
-            <Wallet>
-              <ConnectWallet disconnectedLabel="Connect Wallet" className="cursor-pointer" />
-            </Wallet>
+            <a href="/" style={s.ctaLink}>Browse Events →</a>
           </div>
-        ) : loading ? (
-          <div style={{ textAlign: "center", padding: "64px 24px" }}>
-            <div
-              style={{
-                width: "32px",
-                height: "32px",
-                border: "3px solid rgba(0,82,255,0.15)",
-                borderTop: "3px solid #0052FF",
-                borderRadius: "50%",
-                margin: "0 auto 16px",
-                animation: "spin 0.8s linear infinite",
-              }}
-            />
-            <p style={{ fontSize: "14px", color: "#888" }}>Loading your records...</p>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-        ) : error ? (
-          <div style={{ textAlign: "center", padding: "48px 24px" }}>
-            <p style={{ fontSize: "14px", color: "#b91c1c" }}>{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              style={{ marginTop: "12px", padding: "8px 20px", borderRadius: "99px", border: "1px solid #0052FF", background: "transparent", color: "#0052FF", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}
-            >
-              Try again
-            </button>
-          </div>
-        ) : (
-          <>
-            {attestations.length > 0 && (
-              <p style={{ fontSize: "12px", color: "#999", marginBottom: "16px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                {attestations.length} verified {attestations.length === 1 ? "record" : "records"}
-              </p>
-            )}
-            {attestations.length === 0 ? (
-              <EmptyState />
-            ) : (
-              attestations.map((a) => a && <RecordCard key={a.id} attestation={a} />)
-            )}
-          </>
         )}
-      </div>
 
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "#ffffff",
-          borderTop: "1px solid rgba(0,82,255,0.1)",
-          padding: "12px 20px",
-          display: "flex",
-          justifyContent: "space-around",
-          alignItems: "center",
-        }}
-      >
-        <a href="/" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", textDecoration: "none", color: "#999", fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-          <span style={{ fontSize: "18px" }}>🏠</span>
-          Home
-        </a>
-        <a href="/records" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", textDecoration: "none", color: "#0052FF", fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-          <span style={{ fontSize: "18px" }}>📋</span>
-          Records
-        </a>
-      </div>
+        {/* ── Records list ── */}
+        {records.length > 0 && (
+          <div style={s.recordsList}>
+            {records.map((r) => (
+              <div key={r.uid} style={s.recordCard}>
+                {/* Top row */}
+                <div style={s.recordTop}>
+                  <div style={s.recordLeft}>
+                    <div style={s.eventDot(r.isVip)} />
+                    <div>
+                      <p style={s.eventName}>{r.eventName}</p>
+                      {r.eventDate && (
+                        <p style={s.eventDate}>{r.eventDate} · {r.venue || 'Oakland, CA'}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div style={s.tierPill(r.isVip)}>
+                    {r.tier || 'Attendee'}
+                  </div>
+                </div>
+
+                {/* Meta row */}
+                <div style={s.recordMeta}>
+                  <span style={s.metaItem}>
+                    🗓 {formatDate(r.time)}
+                  </span>
+                  {r.attendeeName && (
+                    <span style={s.metaItem}>👤 {r.attendeeName}</span>
+                  )}
+                  <span style={{ ...s.metaItem, color: '#16A34A' }}>
+                    ✓ Verified onchain
+                  </span>
+                </div>
+
+                {/* Links */}
+                <div style={s.recordLinks}>
+                  <a
+                    href={`https://base.easscan.org/attestation/view/${r.uid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={s.recordLink}
+                  >
+                    View attestation →
+                  </a>
+                  <a
+                    href={`https://basescan.org/tx/${r.txid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ ...s.recordLink, color: '#666' }}
+                  >
+                    Basescan ↗
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Summary footer */}
+        {records.length > 0 && (
+          <p style={s.footer}>
+            {records.length} record{records.length !== 1 ? 's' : ''} · verified on Base ·{' '}
+            <a
+              href={`https://base.easscan.org/address/${address}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#0052FF', textDecoration: 'none' }}
+            >
+              view all on EAS Explorer
+            </a>
+          </p>
+        )}
+      </main>
     </div>
   );
 }
+
+// ─── Suspense wrapper ─────────────────────────────────────────────────────────
+export default function RecordsPage() {
+  return (
+    <Suspense fallback={null}>
+      <RecordsPageInner />
+    </Suspense>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const s: Record<string, any> = {
+  page:         { background: '#FFF', minHeight: '100vh', fontFamily: "'Inter','Helvetica Neue',sans-serif", color: '#111' },
+  header:       { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #F0F0F0' },
+  logo:         { fontWeight: 800, fontSize: 18, color: '#0052FF', letterSpacing: '-0.5px' },
+  badge:        { fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: '#666', background: '#F5F5F5', padding: '4px 10px', borderRadius: 99 },
+  main:         { maxWidth: 520, margin: '0 auto', padding: '32px 20px 100px' },
+  headline:     { fontSize: 36, fontWeight: 900, letterSpacing: '-1.5px', marginBottom: 10 },
+  sub:          { fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 28 },
+
+  // Identity card
+  identityCard: { background: '#FAFAFA', border: '1px solid #EFEFEF', borderRadius: 14, padding: '16px 18px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 14 },
+  identityInfo: { display: 'flex', flexDirection: 'column', gap: 3 },
+  identityMeta: { fontSize: 12, color: '#888', margin: 0 },
+
+  // Empty states
+  emptyCard:    { background: '#FAFAFA', border: '1px solid #EFEFEF', borderRadius: 16, padding: '40px 24px', textAlign: 'center', marginBottom: 16 },
+  emptyIcon:    { fontSize: 32, marginBottom: 12, color: '#CCC' },
+  emptyTitle:   { fontWeight: 700, fontSize: 16, marginBottom: 8, color: '#111' },
+  emptyDesc:    { fontSize: 13, color: '#888', lineHeight: 1.6, margin: '0 auto', maxWidth: 300 },
+  ctaLink:      { display: 'inline-block', marginTop: 16, color: '#0052FF', fontWeight: 600, fontSize: 14, textDecoration: 'none' },
+
+  // Spinner
+  spinner:      { width: 32, height: 32, borderRadius: '50%', border: '3px solid #E5E7EB', borderTopColor: '#0052FF', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' },
+
+  // Records
+  recordsList:  { display: 'flex', flexDirection: 'column', gap: 10 },
+  recordCard:   { background: '#FAFAFA', border: '1px solid #EFEFEF', borderRadius: 14, padding: '16px 18px' },
+  recordTop:    { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
+  recordLeft:   { display: 'flex', alignItems: 'flex-start', gap: 10 },
+  eventDot:     (isVip: boolean) => ({
+    width: 10, height: 10, borderRadius: '50%', marginTop: 4, flexShrink: 0,
+    background: isVip ? '#B8860B' : '#0052FF',
+  }),
+  eventName:    { fontWeight: 700, fontSize: 15, color: '#111', margin: 0, marginBottom: 2 },
+  eventDate:    { fontSize: 12, color: '#888', margin: 0 },
+  tierPill:     (isVip: boolean) => ({
+    fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const,
+    padding: '3px 8px', borderRadius: 5,
+    background: isVip ? 'rgba(184,134,11,0.1)' : 'rgba(0,82,255,0.08)',
+    color: isVip ? '#B8860B' : '#0052FF',
+    border: `1px solid ${isVip ? 'rgba(184,134,11,0.3)' : 'rgba(0,82,255,0.2)'}`,
+    whiteSpace: 'nowrap' as const,
+  }),
+  recordMeta:   { display: 'flex', flexWrap: 'wrap' as const, gap: 12, marginBottom: 10 },
+  metaItem:     { fontSize: 12, color: '#666' },
+  recordLinks:  { display: 'flex', gap: 16 },
+  recordLink:   { fontSize: 12, fontWeight: 600, color: '#0052FF', textDecoration: 'none' },
+
+  // Footer
+  footer:       { fontSize: 12, color: '#AAA', textAlign: 'center' as const, marginTop: 24, lineHeight: 1.6 },
+};
