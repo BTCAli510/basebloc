@@ -356,7 +356,9 @@ export default function TicketsPage() {
             </p>
 
             <Transaction chainId={base.id} calls={calls} onStatus={handleStatus} isSponsored>
-              <TransactionButton text={isFree ? 'Claim Free Ticket →' : `Pay ${displayPrice} USDC →`} style={s.cta} />
+              <div style={s.txBtnWrap}>
+                <TransactionButton text={isFree ? 'Claim Free Ticket →' : `Pay ${displayPrice} USDC →`} />
+              </div>
               <TransactionSponsor />
               <TransactionStatus>
                 <TransactionStatusLabel />
@@ -445,6 +447,7 @@ const s: Record<string, React.CSSProperties> = {
   errTxt:    { color: '#EF4444', fontSize: 12, marginTop: 4 },
   walletNote:{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#92400E', marginBottom: 16 },
   cta:       { display: 'block', width: '100%', background: '#0052FF', color: '#FFF', fontWeight: 700, fontSize: 15, border: 'none', borderRadius: 12, padding: '14px 0', cursor: 'pointer', textAlign: 'center', marginTop: 8 },
+  txBtnWrap: { width: '100%', marginTop: 8 },
   summary:   { background: '#FFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: '14px 16px', marginBottom: 16 },
   hint:      { fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 20 },
   ghost:     { display: 'block', width: '100%', background: 'transparent', color: '#666', fontWeight: 600, fontSize: 14, border: '1.5px solid #E5E7EB', borderRadius: 12, padding: '12px 0', cursor: 'pointer', marginTop: 10 },
