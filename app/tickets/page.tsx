@@ -2,12 +2,14 @@
 
 // app/tickets/page.tsx
 //
-// Updated with VIP allowlist gating (#25 + #26).
-// On wallet connect → calls /api/vip-check → shows VIP tier only if eligible.
-// All prior logic (direct USDC transfer + EAS attestation) unchanged.
+// Updated with VIP allowlist gating (#25 + #26) and magic link unlock (#27).
+// On page load → reads ?vipCode= from URL → validates via /api/vip-magic.
+// On wallet connect → also checks /api/vip-check (allowlist).
+// Either path grants VIP tier access.
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useAccount } from 'wagmi';
+import { useSearchParams } from 'next/navigation';
 import {
   Transaction,
   TransactionButton,
@@ -121,12 +123,17 @@ function buildAttestData(tier: string, name: string, wallet: `0x${string}`): `0x
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function TicketsPage() {
-  const { address } = useAccount();
+import { Suspense } from 'react';
 
-  // VIP status
+function TicketsPageInner() {
+  const { address } = useAccount();
+  const searchParams = useSearchParams();
+
+  // VIP status — granted by allowlist check OR magic link
   const [isVip,         setIsVip]         = useState(false);
   const [vipChecked,    setVipChecked]    = useState(false);
+  const [magicCode,     setMagicCode]     = useState<string | null>(null);
+  const [magicGranted,  setMagicGranted]  = useState(false);
 
   // Flow state
   const [step,          setStep]          = useState<Step>('select');
@@ -170,6 +177,27 @@ export default function TicketsPage() {
         setVipChecked(true);
       });
   }, [address]);
+
+  // ── Magic link check on page load ────────────────────────────────────────
+  useEffect(() => {
+    const code = searchParams.get('vipCode');
+    if (!code) return;
+    setMagicCode(code);
+    fetch('/api/vip-magic', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ code, walletAddress: address ?? 'unknown' }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.valid) {
+          setIsVip(true);
+          setVipChecked(true);
+          setMagicGranted(true);
+        }
+      })
+      .catch(() => {});
+  }, [searchParams]);
 
   // Tiers visible to this wallet
   const visibleTiers = useMemo(
@@ -288,7 +316,7 @@ export default function TicketsPage() {
             {/* VIP unlock notice */}
             {isVip && vipChecked && (
               <div style={s.vipNotice}>
-                ⭐ Your wallet has VIP access unlocked for this event.
+                {magicGranted ? '⭐ VIP access unlocked via your invite link.' : '⭐ Your wallet has VIP access unlocked for this event.'}
               </div>
             )}
 
@@ -456,3 +484,11 @@ const s: Record<string, React.CSSProperties> = {
   link:      { display: 'inline-block', color: '#0052FF', fontSize: 14, fontWeight: 600, textDecoration: 'none', marginTop: 8 },
   footer:    { fontSize: 12, color: '#AAA', textAlign: 'center', marginTop: 32, lineHeight: 1.6 },
 };
+
+export default function TicketsPage() {
+  return (
+    <Suspense fallback={null}>
+      <TicketsPageInner />
+    </Suspense>
+  );
+}
