@@ -526,55 +526,37 @@ export default function Home() {
         </div>
 
         <h1 className="base-head" style={{ fontSize: 'clamp(36px,6vw,62px)', fontWeight: 800, lineHeight: 1.15, letterSpacing: '-2px', marginBottom: 20 }}>
-          Where showing up{' '}
-          <span style={{ color: '#F7931A', display: 'inline-block', position: 'relative', padding: '0 12px' }}>
-            <span style={{ position: 'relative', zIndex: 2 }}>goes onchain.</span>
+          Where showing up goes{' '}
+          <span style={{ color: '#F7931A', display: 'inline-block', position: 'relative', padding: '0 10px' }}>
+            <span style={{ position: 'relative', zIndex: 2 }}>onchain.</span>
             <svg
               aria-hidden="true"
-              viewBox="0 0 260 80"
+              viewBox="0 0 200 70"
               xmlns="http://www.w3.org/2000/svg"
               style={{
                 position: 'absolute',
                 left: '50%',
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
-                width: '115%',
-                height: '200%',
+                width: '120%',
+                height: '210%',
                 pointerEvents: 'none',
                 zIndex: 1,
               }}
             >
-              <ellipse
-                cx="130"
-                cy="40"
-                rx="122"
-                ry="35"
-                fill="none"
-                stroke="rgba(0,82,255,0.18)"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-              />
-              <ellipse
-                cx="130"
-                cy="40"
-                rx="122"
-                ry="35"
-                fill="none"
-                stroke="rgba(0,82,255,0.07)"
-                strokeWidth="8"
-                strokeLinecap="round"
-              />
+              <ellipse cx="100" cy="35" rx="92" ry="28" fill="none" stroke="rgba(0,82,255,0.18)" strokeWidth="3.5" strokeLinecap="round" />
+              <ellipse cx="100" cy="35" rx="92" ry="28" fill="none" stroke="rgba(0,82,255,0.07)" strokeWidth="8" strokeLinecap="round" />
             </svg>
           </span>
         </h1>
 
         <p style={{ fontSize: 17, lineHeight: 1.65, color: '#888888', maxWidth: 520, margin: '0 auto 16px' }}>
-          BASEbloc.app converts real-world cultural participation into verified onchain records — turning every check-in, RSVP, and action into community, opportunity, impact and upwardly compounding value.
+          BASEbloc.app converts real-world participation into verified onchain records — turning every check-in, RSVP, and action into community, opportunity, impact and compounding value.
         </p>
 
         {/* Hierarchy clarity line */}
         <p style={{ fontSize: 13, color: '#aaa', maxWidth: 480, margin: '0 auto 32px', lineHeight: 1.6 }}>
-          The first live product in the{' '}
+          The first live product from the{' '}
           <a href="https://basebloc.org" target="_blank" rel="noopener noreferrer" style={{ color: '#0052FF', textDecoration: 'none', fontWeight: 600 }}>BASEbloc.org</a>
           {' '}network — first deployed under{' '}
           <a href="https://baseoak.org" target="_blank" rel="noopener noreferrer" style={{ color: '#0052FF', textDecoration: 'none', fontWeight: 600 }}>BASE Oakland bloc</a>
@@ -583,16 +565,16 @@ export default function Home() {
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
-            onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ padding: '14px 28px', borderRadius: 10, fontSize: 15, fontWeight: 500, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', background: '#F7931A', color: '#fff', border: 'none', transition: 'all 0.2s' }}
-          >
-            Explore Events
-          </button>
-          <button
             onClick={() => document.getElementById('host')?.scrollIntoView({ behavior: 'smooth' })}
             style={{ padding: '14px 28px', borderRadius: 10, fontSize: 15, fontWeight: 500, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', background: '#F7931A', color: '#fff', border: 'none', transition: 'all 0.2s' }}
           >
             Host an Event
+          </button>
+          <button
+            onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ padding: '14px 28px', borderRadius: 10, fontSize: 15, fontWeight: 500, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', background: '#fff', color: '#0052FF', border: '1.5px solid #0052FF', transition: 'all 0.2s' }}
+          >
+            Explore Events
           </button>
         </div>
 
@@ -626,15 +608,17 @@ export default function Home() {
             style={{ background: '#fff', border: '2px solid #0052FF', borderRadius: 16, overflow: 'hidden', cursor: 'pointer' }}
             onClick={() => setActivePage('event')}
           >
-            <div style={{ background: 'linear-gradient(135deg, #0A0A0A 0%, #1a1a2e 100%)', padding: '32px 20px', position: 'relative', minHeight: 120 }}>
-              <div style={{ position: 'absolute', top: 10, left: 10, background: '#0052FF', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 4, letterSpacing: 1 }}>FEATURED</div>
-              <div className="syne" style={{ color: '#fff', fontSize: 20, fontWeight: 800, marginTop: 20 }}>MY CITY OUR MUSIC</div>
-              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 4 }}>music + creative industries + AI summit</div>
-              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 6 }}>May 23, 2026 · Henry J. Kaiser Center · Oakland</div>
+            <div style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', top: 10, left: 10, background: '#0052FF', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 4, letterSpacing: 1, zIndex: 2 }}>FEATURED</div>
+              <img
+                src="/event-flyer.png"
+                alt="MY CITY OUR MUSIC — May 23, 2026"
+                style={{ width: '100%', display: 'block', objectFit: 'cover', height: 200 }}
+              />
             </div>
             <div style={{ padding: 20 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#0052FF', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
-                HipHopTV + Oakland XChange · Coalition 001
+                HipHopTV + Oakland XChange + CitiesABC · Coalition 001
               </div>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
                 {['Music', 'Creative Industries', 'AI Summit'].map(t => (
@@ -656,21 +640,15 @@ export default function Home() {
 
           {/* Coming Soon Cards */}
           {[
-            { loc: 'Bay Area', time: 'Summer 2026', title: 'Cultural Event TBA', tags: ['Culture', 'Community'] },
-            { loc: 'Los Angeles', time: 'Fall 2026', title: 'Arts & Tech Summit TBA', tags: ['Arts', 'Technology'] },
+            { loc: 'Bay Area', time: 'Summer 2026' },
+            { loc: 'Los Angeles', time: 'Fall 2026' },
           ].map(c => (
             <div key={c.loc} className="event-card" style={{ background: '#F7F7F7', border: '1px solid #EFEFEF', borderRadius: 16, overflow: 'hidden', opacity: 0.7 }}>
               <div style={{ background: '#E8E8E8', height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: '#bbb', fontSize: 13 }}>Coming Soon</span>
+                <span style={{ color: '#bbb', fontSize: 13, fontWeight: 600, letterSpacing: 1 }}>Coming Soon</span>
               </div>
               <div style={{ padding: 20 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#888', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>{c.loc} · {c.time}</div>
-                <div className="syne" style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, color: '#888' }}>{c.title}</div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-                  {c.tags.map(t => (
-                    <span key={t} style={{ background: '#E0E0E0', borderRadius: 6, fontSize: 11, padding: '3px 8px', color: '#888' }}>{t}</span>
-                  ))}
-                </div>
+                <div className="syne" style={{ fontSize: 18, fontWeight: 700, marginBottom: 16, color: '#888' }}>TBA</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 12, color: '#aaa' }}>BASEbloc.org network</span>
                   <button style={{ background: 'none', border: '1px solid #ccc', borderRadius: 7, padding: '6px 12px', fontSize: 12, color: '#aaa', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
@@ -685,33 +663,38 @@ export default function Home() {
 
       {/* HOST SECTION */}
       <section id="host" style={{ padding: '80px 24px', background: '#F7F7F7' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'start' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: '#0052FF', marginBottom: 16 }}>For Coalition Organizers</div>
-            <div className="syne" style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 800, lineHeight: 1.1, marginBottom: 20 }}>
-              Power your coalition activation.{' '}
-              <span style={{ color: '#0052FF' }}>Make participation onchain.</span>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: '#F7931A', marginBottom: 16 }}>For Event Hosts</div>
+            <div className="syne" style={{ fontSize: 'clamp(26px,3.5vw,38px)', fontWeight: 800, lineHeight: 1.1, marginBottom: 20, color: '#0A0A0A' }}>
+              Stop running events<br />that disappear.
             </div>
-            <p style={{ fontSize: 16, lineHeight: 1.7, color: '#666', marginBottom: 24 }}>
-              BASEbloc.app powers the participation layer for BASEbloc.org coalitions and aligned collaborators — from RSVP to check-in to permanent onchain records. No tickets to lose. No receipts to forget.
+            <p style={{ fontSize: 16, lineHeight: 1.75, color: '#444', marginBottom: 20 }}>
+              BASEbloc.app turns any gathering into belonging that compounds. Every time someone shows up, they build something — and that's what keeps them coming back.
             </p>
-            <div style={{ display: 'flex', gap: 32, marginBottom: 24 }}>
-              <div>
-                <div className="syne" style={{ fontSize: 32, fontWeight: 800, color: '#0052FF' }}>100%</div>
-                <div style={{ fontSize: 12, color: '#888' }}>Gasless for attendees via Coinbase Paymaster</div>
-              </div>
-              <div>
-                <div className="syne" style={{ fontSize: 32, fontWeight: 800, color: '#0052FF' }}>$0</div>
-                <div style={{ fontSize: 12, color: '#888' }}>Cost for attendees to obtain onchain records</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 8, height: 8, background: '#0052FF', borderRadius: '50%' }}></div>
-              <span style={{ fontSize: 14, color: '#666' }}>Works inside the Base App — native Mini App experience</span>
+            <p style={{ fontSize: 15, lineHeight: 1.75, color: '#666', marginBottom: 32 }}>
+              Concerts, pop-ups, block parties, community nights, conferences — if people are showing up, that participation should lead to something. Every attendee leaves with future access, status, and opportunity tied to being there. That is what brings them back. That is what grows community.
+            </p>
+
+            {/* Feature list */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[
+                { icon: '🎟', text: 'Attendance that unlocks future access, status, and opportunity' },
+                { icon: '🔁', text: 'Hosts get stronger retention — happier guests, more word of mouth, more return visits' },
+                { icon: '⛓', text: 'Permanent onchain attendance credential — free for every attendee' },
+                { icon: '⛽', text: '100% gasless via Coinbase Paymaster — $0 for attendees' },
+                { icon: '🚪', text: 'Fast door check-in — no bottleneck, no friction' },
+                { icon: '📱', text: 'Native inside the Base App' },
+              ].map(f => (
+                <div key={f.text} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 18, lineHeight: 1, marginTop: 2, flexShrink: 0 }}>{f.icon}</span>
+                  <span style={{ fontSize: 14, lineHeight: 1.6, color: '#444' }}>{f.text}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #EFEFEF' }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #EFEFEF', position: 'sticky', top: 24 }}>
             <div className="syne" style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Bring BASEbloc.app to your event</div>
             <p style={{ fontSize: 14, color: '#888', marginBottom: 24 }}>Tell us about your event and we'll be in touch.</p>
             {[
@@ -727,7 +710,7 @@ export default function Home() {
                 style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #EFEFEF', borderRadius: 8, fontSize: 14, fontFamily: 'DM Sans, sans-serif', marginBottom: 12, outline: 'none', boxSizing: 'border-box' }}
               />
             ))}
-            <button style={{ width: '100%', padding: 14, background: '#0052FF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+            <button style={{ width: '100%', padding: 14, background: '#F7931A', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
               Submit Inquiry
             </button>
             <p style={{ fontSize: 11, color: '#aaa', marginTop: 12, textAlign: 'center' }}>
