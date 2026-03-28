@@ -1,449 +1,892 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { useAccount, useWalletClient } from "wagmi";
+import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
+import { Identity, Avatar, Name, Badge } from "@coinbase/onchainkit/identity";
+import { useName } from "@coinbase/onchainkit/identity";
+import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
+import { base } from "viem/chains";
 
-export default function Home() {
-  const [countdown, setCountdown] = useState({ days: '00', hrs: '00', min: '00', sec: '00' });
-  const [toast, setToast] = useState('');
-  const [toastVisible, setToastVisible] = useState(false);
-  const [hostForm, setHostForm] = useState({ name: '', email: '', event: '', size: '' });
+const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
+const SCHEMA_UID =
+  "0xe75ec39ab8bfdd680f02b11817ed9e10556850278264c0917d645c73866784d9";
 
+const COINBASE_VERIFIED_SCHEMA_ID =
+  "0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9";
+
+const BUILDER_CODE_DATA_SUFFIX =
+  "0x62635f37736474747335310b0080218021802180218021802180218021";
+
+const EVENT_DATE = new Date("2026-05-23T00:00:00");
+const EVENT_TIMESTAMP_UTC = BigInt(1779494400);
+
+function getShortWalletLabel(address?: string) {
+  if (!address) return "Guest";
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+// ─── Network Hierarchy Banner ────────────────────────────────────────────────
+function NetworkBanner() {
+  return (
+    <div style={{
+      width: '100%',
+      background: '#F7F7F7',
+      borderBottom: '1px solid #EFEFEF',
+      padding: '8px 24px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      fontSize: 11,
+      fontWeight: 500,
+      color: '#888888',
+      letterSpacing: '0.3px',
+      flexWrap: 'wrap',
+      textAlign: 'center',
+    }}>
+      <a href="https://basebloc.org" target="_blank" rel="noopener noreferrer"
+        style={{ color: '#0052FF', textDecoration: 'none', fontWeight: 600 }}>
+        BASEbloc.org
+      </a>
+      <span>network ·</span>
+      <a href="https://baseoak.org" target="_blank" rel="noopener noreferrer"
+        style={{ color: '#0052FF', textDecoration: 'none', fontWeight: 600 }}>
+        BASE Oakland bloc
+      </a>
+      <span>Coalition 001 · First live product:</span>
+      <span style={{ color: '#0A0A0A', fontWeight: 600 }}>BASEbloc.app</span>
+    </div>
+  );
+}
+
+// ─── Top Nav ─────────────────────────────────────────────────────────────────
+function TopNav({ onMyRecords }: { onMyRecords: () => void }) {
+  return (
+    <nav style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '14px 24px',
+      borderBottom: '1px solid #EFEFEF',
+      background: '#fff',
+      position: 'sticky',
+      top: 0,
+      zIndex: 50,
+    }}>
+      <div className="syne" style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px' }}>
+        BASE <span style={{ color: '#0052FF' }}>bloc</span>
+      </div>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <button
+          onClick={onMyRecords}
+          style={{
+            background: '#fff',
+            border: '1.5px solid #0052FF',
+            color: '#0052FF',
+            fontFamily: 'DM Sans, sans-serif',
+            fontSize: 13,
+            fontWeight: 500,
+            padding: '8px 18px',
+            borderRadius: 8,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+        >
+          My Records
+        </button>
+        <button
+          style={{
+            background: '#F7931A',
+            border: 'none',
+            color: '#fff',
+            fontFamily: 'DM Sans, sans-serif',
+            fontSize: 13,
+            fontWeight: 500,
+            padding: '8px 18px',
+            borderRadius: 8,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+          onClick={() => document.getElementById('host')?.scrollIntoView({ behavior: 'smooth' })}
+        >
+          Host an Event
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+// ─── Countdown ───────────────────────────────────────────────────────────────
+function useCountdown(target: Date) {
+  const [diff, setDiff] = useState(0);
   useEffect(() => {
-    const target = new Date('2026-05-23T10:00:00-07:00');
-    const tick = () => {
-      const diff = target.getTime() - Date.now();
-      if (diff <= 0) return;
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setCountdown({
-        days: String(d).padStart(2, '0'),
-        hrs: String(h).padStart(2, '0'),
-        min: String(m).padStart(2, '0'),
-        sec: String(s).padStart(2, '0'),
-      });
-    };
+    const tick = () => setDiff(Math.max(0, target.getTime() - Date.now()));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
+  }, [target]);
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  return { d, h, m, s };
+}
+
+// ─── RSVP Count ──────────────────────────────────────────────────────────────
+function useRSVPCount() {
+  const [count, setCount] = useState<number | null>(null);
+  useEffect(() => {
+    fetch('/api/rsvp-count')
+      .then(r => r.json())
+      .then(d => setCount(d.count ?? 0))
+      .catch(() => setCount(0));
   }, []);
+  return count;
+}
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 3000);
-  };
+// ─── Main Export ─────────────────────────────────────────────────────────────
+export default function Home() {
+  const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const { data: basename } = useName({ address, chain: base });
 
-  const handleHostSubmit = () => {
-    if (!hostForm.name || !hostForm.email || !hostForm.event) {
-      showToast('Please fill in all fields first.');
-      return;
+  const [activePage, setActivePage] = useState<'home' | 'event' | 'records'>('home');
+  const [rsvpState, setRsvpState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [attestationUID, setAttestationUID] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState('');
+  const [nameEdited, setNameEdited] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const countdown = useCountdown(EVENT_DATE);
+  const rsvpCount = useRSVPCount();
+
+  // Auto-fill basename
+  useEffect(() => {
+    if (basename && !nameEdited) setDisplayName(basename);
+  }, [basename, nameEdited]);
+
+  const finalDisplayName = displayName.trim() || getShortWalletLabel(address);
+
+  async function handleRSVP() {
+    if (!walletClient || !address) return;
+    setRsvpState('loading');
+    setErrorMsg('');
+    try {
+      const schemaEncoder = new SchemaEncoder(
+        'string eventName,string eventDate,string coalition,bool attending,string ticketTier,string displayName'
+      );
+      const encoded = schemaEncoder.encodeData([
+        { name: 'eventName', value: 'MY CITY OUR MUSIC', type: 'string' },
+        { name: 'eventDate', value: '2026-05-23', type: 'string' },
+        { name: 'coalition', value: 'BASE Oakland bloc', type: 'string' },
+        { name: 'attending', value: true, type: 'bool' },
+        { name: 'ticketTier', value: 'General', type: 'string' },
+        { name: 'displayName', value: finalDisplayName, type: 'string' },
+      ]);
+
+      const { encodeFunctionData } = await import('viem');
+      const EAS_ABI = [{
+        name: 'attest',
+        type: 'function',
+        inputs: [{
+          name: 'request', type: 'tuple',
+          components: [
+            { name: 'schema', type: 'bytes32' },
+            {
+              name: 'data', type: 'tuple',
+              components: [
+                { name: 'recipient', type: 'address' },
+                { name: 'expirationTime', type: 'uint64' },
+                { name: 'revocable', type: 'bool' },
+                { name: 'refUID', type: 'bytes32' },
+                { name: 'data', type: 'bytes' },
+                { name: 'value', type: 'uint256' },
+              ]
+            }
+          ]
+        }],
+        outputs: [{ name: '', type: 'bytes32' }],
+        stateMutability: 'payable',
+      }] as const;
+
+      const calldata = encodeFunctionData({
+        abi: EAS_ABI,
+        functionName: 'attest',
+        args: [{
+          schema: SCHEMA_UID as `0x${string}`,
+          data: {
+            recipient: address,
+            expirationTime: BigInt(0),
+            revocable: true,
+            refUID: '0x0000000000000000000000000000000000000000000000000000000000000000',
+            data: encoded as `0x${string}`,
+            value: BigInt(0),
+          }
+        }]
+      });
+
+      const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
+      const txHash = await (walletClient as any).request({
+        method: 'wallet_sendCalls',
+        params: [{
+          version: '1.0',
+          chainId: '0x2105',
+          from: address,
+          calls: [{
+            to: EAS_CONTRACT,
+            data: calldata,
+            value: '0x0',
+          }],
+          capabilities: paymasterUrl ? {
+            paymasterService: { url: paymasterUrl }
+          } : {},
+          ...(BUILDER_CODE_DATA_SUFFIX ? { dataSuffix: BUILDER_CODE_DATA_SUFFIX } : {}),
+        }]
+      });
+
+      // Poll for attestation UID
+      let uid: string | null = null;
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+        const res = await fetch('https://base.easscan.org/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `query {
+              attestations(
+                where: { attester: { equals: "${address}" }, schemaId: { equals: "${SCHEMA_UID}" } }
+                orderBy: { timeCreated: desc }
+                take: 1
+              ) { id }
+            }`
+          })
+        });
+        const json = await res.json();
+        uid = json?.data?.attestations?.[0]?.id ?? null;
+        if (uid) break;
+      }
+
+      setAttestationUID(uid);
+      setRsvpState('success');
+    } catch (e: any) {
+      setErrorMsg(e?.message || 'Something went wrong. Please try again.');
+      setRsvpState('error');
     }
-    showToast(`Thanks ${hostForm.name}! We'll be in touch within 48 hours.`);
-    setHostForm({ name: '', email: '', event: '', size: '' });
-  };
+  }
 
-  const scrollToHost = () => {
-    setTimeout(() => {
-      document.getElementById('host')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
+  // ── Records Page ────────────────────────────────────────────────────────────
+  if (activePage === 'records') {
+    return (
+      <>
+        <NetworkBanner />
+        <TopNav onMyRecords={() => setActivePage('home')} />
+        <div style={{ maxWidth: 600, margin: '60px auto', padding: '0 24px', textAlign: 'center' }}>
+          <div className="syne" style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>
+            My Records
+          </div>
+          <p style={{ color: '#888', fontSize: 15, marginBottom: 32 }}>
+            Connect your wallet to see your verified onchain participation records.
+          </p>
+          {!isConnected ? (
+            <ConnectWallet />
+          ) : (
+            <div style={{ background: '#F7F7F7', borderRadius: 12, padding: 24, textAlign: 'left' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: '#0052FF', marginBottom: 16 }}>
+                Your Participation Records
+              </div>
+              <p style={{ color: '#888', fontSize: 14 }}>
+                Records screen coming soon — pulling your attestations from EAS via GraphQL.
+              </p>
+            </div>
+          )}
+          <button
+            onClick={() => setActivePage('home')}
+            style={{ marginTop: 24, background: 'none', border: 'none', color: '#0052FF', cursor: 'pointer', fontSize: 14 }}
+          >
+            ← Back
+          </button>
+        </div>
+      </>
+    );
+  }
 
+  // ── RSVP / Mini Page ────────────────────────────────────────────────────────
+  if (activePage === 'event') {
+    return (
+      <>
+        <NetworkBanner />
+        <div style={{ minHeight: '100vh', background: '#fff', fontFamily: 'DM Sans, sans-serif' }}>
+          <div style={{ maxWidth: 480, margin: '0 auto', padding: '40px 24px' }}>
+
+            {/* Back */}
+            <button
+              onClick={() => setActivePage('home')}
+              style={{ background: 'none', border: 'none', color: '#0052FF', cursor: 'pointer', fontSize: 14, marginBottom: 24, padding: 0 }}
+            >
+              ← Back to BASE bloc
+            </button>
+
+            {/* Success State */}
+            {rsvpState === 'success' ? (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>✓</div>
+                <div className="syne" style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>
+                  Participation Attested
+                </div>
+                <p style={{ color: '#888', fontSize: 15, marginBottom: 24 }}>
+                  MY CITY OUR MUSIC · Base (L2)
+                </p>
+
+                {isConnected && address && (
+                  <div style={{ background: '#F7F7F7', borderRadius: 12, padding: 20, marginBottom: 24 }}>
+                    <Identity address={address} chain={base}>
+                      <Avatar />
+                      <Name />
+                      <Badge />
+                    </Identity>
+                  </div>
+                )}
+
+                <div style={{ background: '#F7F7F7', borderRadius: 12, padding: 20, fontSize: 14, textAlign: 'left', marginBottom: 24 }}>
+                  {[
+                    ['Event', 'MY CITY OUR MUSIC'],
+                    ['Date', 'May 23, 2026'],
+                    ['Network', 'Base (L2)'],
+                    ['Gas cost', '$0.00 (sponsored)'],
+                    ['Coalition', 'BASE Oakland bloc'],
+                  ].map(([k, v]) => (
+                    <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #EFEFEF' }}>
+                      <span style={{ color: '#888' }}>{k}</span>
+                      <span style={{ color: '#0052FF', fontWeight: 500 }}>{v}</span>
+                    </div>
+                  ))}
+                  {attestationUID && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                      <span style={{ color: '#888' }}>Attestation</span>
+                      <a
+                        href={`https://base.easscan.org/attestation/view/${attestationUID}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: '#0052FF', fontWeight: 500, textDecoration: 'none' }}
+                      >
+                        View on EAS ↗
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                <p style={{ fontSize: 12, color: '#aaa', marginBottom: 8 }}>
+                  Your participation record lives in your wallet — permanent and portable across the BASEbloc.org network.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Event Header */}
+                <div style={{ marginBottom: 32 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: '#0052FF', marginBottom: 8 }}>
+                    BASEbloc.org · Coalition 001 Activation
+                  </div>
+                  <div className="syne" style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1, marginBottom: 12 }}>
+                    MY CITY OUR MUSIC
+                  </div>
+                  <p style={{ color: '#888', fontSize: 15, lineHeight: 1.6 }}>
+                    Music, Creative Industries & AI Summit<br />
+                    May 23, 2026 · Henry J. Kaiser Center for the Arts, Oakland<br />
+                    A HipHopTV + Oakland XChange production.
+                  </p>
+                </div>
+
+                {/* Countdown */}
+                <div style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
+                  {[
+                    [countdown.d, 'Days'],
+                    [countdown.h, 'Hours'],
+                    [countdown.m, 'Min'],
+                    [countdown.s, 'Sec'],
+                  ].map(([v, l]) => (
+                    <div key={String(l)} style={{ flex: 1, background: '#F7F7F7', borderRadius: 10, padding: '12px 8px', textAlign: 'center' }}>
+                      <div className="syne" style={{ fontSize: 24, fontWeight: 800, color: '#0052FF' }}>{v}</div>
+                      <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{l}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Connect + RSVP */}
+                {!isConnected ? (
+                  <div>
+                    <p style={{ fontSize: 14, color: '#888', marginBottom: 16 }}>
+                      Connect your Coinbase Smart Wallet to RSVP onchain. No gas required — fully sponsored.
+                    </p>
+                    <ConnectWallet />
+                    <p style={{ fontSize: 11, color: '#aaa', marginTop: 12 }}>
+                      Base App · Mini App · No gas required for attendees
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    {isConnected && address && (
+                      <div style={{ background: '#F7F7F7', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+                        <Identity address={address} chain={base}>
+                          <Avatar />
+                          <Name />
+                          <Badge />
+                        </Identity>
+                      </div>
+                    )}
+
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 6, color: '#444' }}>
+                        Display Name (optional)
+                      </label>
+                      <input
+                        value={displayName}
+                        onChange={e => { setDisplayName(e.target.value); setNameEdited(true); }}
+                        placeholder="Your name or handle"
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: '1.5px solid #EFEFEF',
+                          borderRadius: 8,
+                          fontSize: 14,
+                          fontFamily: 'DM Sans, sans-serif',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                      <p style={{ fontSize: 11, color: '#aaa', marginTop: 6 }}>
+                        {basename ? 'Pre-filled from your Basename — edit freely' : 'Optional — leave blank to use your wallet address'}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={handleRSVP}
+                      disabled={rsvpState === 'loading'}
+                      style={{
+                        width: '100%',
+                        padding: '14px',
+                        background: rsvpState === 'loading' ? '#aaa' : '#0052FF',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: 10,
+                        fontSize: 16,
+                        fontWeight: 600,
+                        fontFamily: 'DM Sans, sans-serif',
+                        cursor: rsvpState === 'loading' ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {rsvpState === 'loading' ? 'Attesting to Base...' : 'RSVP on Base'}
+                    </button>
+
+                    {rsvpState === 'error' && (
+                      <p style={{ color: 'red', fontSize: 13, marginTop: 12 }}>{errorMsg}</p>
+                    )}
+
+                    <p style={{ fontSize: 11, color: '#aaa', marginTop: 12, textAlign: 'center' }}>
+                      Your RSVP is a permanent onchain record via EAS · Gas fully sponsored by Coinbase Paymaster
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // ── Home Page ────────────────────────────────────────────────────────────────
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
-        *{margin:0;padding:0;box-sizing:border-box;}
-        :root{--blue:#0052FF;--blue-dim:#0040CC;--black:#0A0A0A;--white:#FFFFFF;--gray-50:#F7F7F7;--gray-100:#EFEFEF;--gray-300:#CCCCCC;--gray-500:#888888;--gray-700:#444444;}
-        html{scroll-behavior:smooth;}
-        body{font-family:'DM Sans',sans-serif;background:#fff;color:#0A0A0A;overflow-x:hidden;}
-        .syne{font-family:'Syne',sans-serif;}
-        @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
-        .dot-pulse{animation:pulse 2s infinite;}
-        .carousel::-webkit-scrollbar{height:4px;}
-        .carousel::-webkit-scrollbar-track{background:#EFEFEF;border-radius:4px;}
-        .carousel::-webkit-scrollbar-thumb{background:#0052FF;border-radius:4px;}
-        .event-card-clickable:hover{transform:translateY(-4px);border-color:rgba(0,82,255,0.2)!important;box-shadow:0 20px 40px rgba(0,82,255,0.08);}
-        .eco-card:hover{border-color:#0052FF!important;transform:translateY(-2px);}
-        .host-input:focus{border-color:#0052FF!important;outline:none;}
-        .btn-ghost-nav:hover{border-color:#0052FF!important;color:#0052FF!important;}
-        .btn-lg-secondary:hover{border-color:#0052FF!important;color:#0052FF!important;}
-        .back-btn:hover{color:#0052FF!important;}
+        @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: #fff; color: #0A0A0A; }
+        .base-head { font-family: 'Inter Tight', 'Inter', sans-serif; }
+        .syne { font-family: 'Inter Tight', 'Inter', sans-serif; }
+        .dot-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .event-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .event-card { transition: all 0.2s; }
       `}</style>
 
-      {/* NAV */}
-      <nav style={{position:'sticky',top:0,zIndex:100,background:'rgba(255,255,255,0.97)',backdropFilter:'blur(10px)',borderBottom:'1px solid #EFEFEF',padding:'0 24px',height:60,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-        <div
-          className="syne"
-          style={{fontWeight:800,fontSize:18,color:'#0A0A0A',letterSpacing:'-0.5px',cursor:'pointer'}}
-          onClick={() => window.scrollTo(0,0)}
-        >
-          BASE <span style={{color:'#0052FF'}}>bloc</span>
+      <NetworkBanner />
+      <TopNav onMyRecords={() => setActivePage('records')} />
+
+      {/* HERO */}
+      <section style={{ padding: '72px 24px 48px', textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          background: '#F7F7F7', border: '1px solid #EFEFEF', borderRadius: 100,
+          padding: '6px 14px', fontSize: 12, fontWeight: 500, color: '#444444', marginBottom: 24
+        }}>
+          <span className="dot-pulse" style={{ width: 6, height: 6, background: '#0052FF', borderRadius: '50%', display: 'inline-block' }}></span>
+          Built on Base · Powered by EAS
         </div>
-        <div style={{display:'flex',gap:12,alignItems:'center'}}>
+
+        <h1 className="base-head" style={{ fontSize: 'clamp(36px,6vw,62px)', fontWeight: 800, lineHeight: 1.15, letterSpacing: '-2px', marginBottom: 20 }}>
+          Where showing up{' '}
+          <span style={{ color: '#F7931A', display: 'inline-block', position: 'relative', padding: '0 12px' }}>
+            <span style={{ position: 'relative', zIndex: 2 }}>goes onchain.</span>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 260 80"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '115%',
+                height: '200%',
+                pointerEvents: 'none',
+                zIndex: 1,
+              }}
+            >
+              <ellipse
+                cx="130"
+                cy="40"
+                rx="122"
+                ry="35"
+                fill="none"
+                stroke="rgba(0,82,255,0.18)"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              />
+              <ellipse
+                cx="130"
+                cy="40"
+                rx="122"
+                ry="35"
+                fill="none"
+                stroke="rgba(0,82,255,0.07)"
+                strokeWidth="8"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+        </h1>
+
+        <p style={{ fontSize: 17, lineHeight: 1.65, color: '#888888', maxWidth: 520, margin: '0 auto 16px' }}>
+          BASEbloc.app converts real-world cultural participation into verified onchain records — turning every check-in, RSVP, and action into community, opportunity, impact and upwardly compounding value.
+        </p>
+
+        {/* Hierarchy clarity line */}
+        <p style={{ fontSize: 13, color: '#aaa', maxWidth: 480, margin: '0 auto 32px', lineHeight: 1.6 }}>
+          The first live product in the{' '}
+          <a href="https://basebloc.org" target="_blank" rel="noopener noreferrer" style={{ color: '#0052FF', textDecoration: 'none', fontWeight: 600 }}>BASEbloc.org</a>
+          {' '}network — first deployed under{' '}
+          <a href="https://baseoak.org" target="_blank" rel="noopener noreferrer" style={{ color: '#0052FF', textDecoration: 'none', fontWeight: 600 }}>BASE Oakland bloc</a>
+          , Coalition 001.
+        </p>
+
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
-            className="btn-ghost-nav"
-            style={{background:'none',border:'1px solid #CCCCCC',color:'#0A0A0A',fontFamily:'DM Sans,sans-serif',fontSize:13,fontWeight:500,padding:'8px 16px',borderRadius:8,cursor:'pointer',transition:'all 0.2s'}}
-            onClick={() => showToast('Records coming soon — building now!')}
-          >My Records</button>
+            onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ padding: '14px 28px', borderRadius: 10, fontSize: 15, fontWeight: 500, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', background: '#F7931A', color: '#fff', border: 'none', transition: 'all 0.2s' }}
+          >
+            Explore Events
+          </button>
           <button
-            style={{background:'#0052FF',border:'none',color:'#fff',fontFamily:'DM Sans,sans-serif',fontSize:13,fontWeight:500,padding:'8px 18px',borderRadius:8,cursor:'pointer',transition:'all 0.2s'}}
-            onClick={scrollToHost}
-          >Host an Event</button>
+            onClick={() => document.getElementById('host')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ padding: '14px 28px', borderRadius: 10, fontSize: 15, fontWeight: 500, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', background: '#F7931A', color: '#fff', border: 'none', transition: 'all 0.2s' }}
+          >
+            Host an Event
+          </button>
         </div>
-      </nav>
 
-      {/* HOME PAGE */}
-      <div>
+        <div style={{ marginTop: 32, fontSize: 12, color: '#888888', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <strong style={{ color: '#0A0A0A' }}>{rsvpCount ?? '—'}</strong> verified RSVPs onchain ·&nbsp;
+          <strong style={{ color: '#0A0A0A' }}>May 23</strong>&nbsp;· Oakland · Coalition 001 active · More city coalitions coming
+        </div>
+      </section>
 
-        {/* HERO */}
-        <section style={{padding:'72px 24px 48px',textAlign:'center',maxWidth:760,margin:'0 auto'}}>
-          <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'#F7F7F7',border:'1px solid #EFEFEF',borderRadius:100,padding:'6px 14px',fontSize:12,fontWeight:500,color:'#444444',marginBottom:24}}>
-            <span className="dot-pulse" style={{width:6,height:6,background:'#0052FF',borderRadius:'50%',display:'inline-block'}}></span>
-            Built on Base · Powered by EAS
+      {/* EVENTS */}
+      <section style={{ padding: '64px 24px' }} id="events">
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: '#0052FF', marginBottom: 8 }}>Featured Events</div>
+            <div className="syne" style={{ fontSize: 'clamp(24px,4vw,36px)', fontWeight: 700, letterSpacing: '-1px', marginBottom: 8 }}>Live Network Activations</div>
+            <div style={{ fontSize: 15, color: '#888888' }}>Coalition-led activations powered by BASEbloc.app across the BASEbloc.org network.</div>
           </div>
-          <h1 className="syne" style={{fontSize:'clamp(36px,6vw,62px)',fontWeight:800,lineHeight:1.05,letterSpacing:'-2px',marginBottom:20}}>
-            Where showing up <span style={{color:'#0052FF'}}>goes onchain.</span>
-          </h1>
-          <p style={{fontSize:17,lineHeight:1.65,color:'#888888',maxWidth:520,margin:'0 auto 36px'}}>
-            BASE bloc converts real-world cultural participation into verified onchain records — turning every check-in, RSVP, and action into a permanent piece of your identity.
-          </p>
-          <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
-            <button
-              style={{padding:'14px 28px',borderRadius:10,fontSize:15,fontWeight:500,fontFamily:'DM Sans,sans-serif',cursor:'pointer',background:'#0052FF',color:'#fff',border:'none',transition:'all 0.2s'}}
-              onClick={() => document.getElementById('events')?.scrollIntoView({behavior:'smooth'})}
-            >Explore Events</button>
-            <button
-              className="btn-lg-secondary"
-              style={{padding:'14px 28px',borderRadius:10,fontSize:15,fontWeight:500,fontFamily:'DM Sans,sans-serif',cursor:'pointer',background:'#fff',color:'#0A0A0A',border:'1.5px solid #CCCCCC',transition:'all 0.2s'}}
-              onClick={scrollToHost}
-            >Host an Event</button>
-          </div>
-          <div style={{marginTop:32,fontSize:12,color:'#888888',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-            <strong style={{color:'#0A0A0A'}}>3</strong> verified RSVPs onchain ·&nbsp;<strong style={{color:'#0A0A0A'}}>May 23</strong>&nbsp;· Oakland · More cities coming
-          </div>
-        </section>
+          <button
+            onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ padding: '10px 20px', borderRadius: 8, fontSize: 14, fontWeight: 500, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', background: '#fff', color: '#0A0A0A', border: '1.5px solid #EFEFEF', transition: 'all 0.2s' }}
+          >
+            See all events →
+          </button>
+        </div>
 
-        {/* EVENTS */}
-        <section style={{padding:'64px 24px'}} id="events">
-          <div style={{maxWidth:1100,margin:'0 auto',display:'flex',alignItems:'flex-end',justifyContent:'space-between',marginBottom:32,flexWrap:'wrap',gap:16}}>
-            <div>
-              <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#0052FF',marginBottom:8}}>Featured Events</div>
-              <div className="syne" style={{fontSize:'clamp(24px,4vw,36px)',fontWeight:700,letterSpacing:'-1px',marginBottom:8}}>What&apos;s on Base</div>
-              <div style={{fontSize:15,color:'#888888'}}>Real-world events. Verified participation. Permanent records.</div>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+
+          {/* Featured Event Card */}
+          <div
+            className="event-card"
+            style={{ background: '#fff', border: '2px solid #0052FF', borderRadius: 16, overflow: 'hidden', cursor: 'pointer' }}
+            onClick={() => setActivePage('event')}
+          >
+            <div style={{ background: 'linear-gradient(135deg, #0A0A0A 0%, #1a1a2e 100%)', padding: '32px 20px', position: 'relative', minHeight: 120 }}>
+              <div style={{ position: 'absolute', top: 10, left: 10, background: '#0052FF', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 4, letterSpacing: 1 }}>FEATURED</div>
+              <div className="syne" style={{ color: '#fff', fontSize: 20, fontWeight: 800, marginTop: 20 }}>MY CITY OUR MUSIC</div>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 4 }}>music + creative industries + AI summit</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginTop: 6 }}>May 23, 2026 · Henry J. Kaiser Center · Oakland</div>
             </div>
-            <button
-              style={{background:'none',border:'1px solid #CCCCCC',color:'#0A0A0A',fontFamily:'DM Sans,sans-serif',fontSize:13,fontWeight:500,padding:'8px 16px',borderRadius:8,cursor:'pointer'}}
-              onClick={() => showToast('See all events — coming soon')}
-            >See all events →</button>
-          </div>
-          <div style={{maxWidth:1100,margin:'0 auto'}}>
-            <div className="carousel" style={{display:'flex',gap:20,overflowX:'auto',scrollSnapType:'x mandatory',WebkitOverflowScrolling:'touch',paddingBottom:16}}>
-
-              {/* FEATURED CARD — now routes to real URL */}
-              <div
-                className="event-card-clickable"
-                style={{minWidth:300,maxWidth:300,border:'1px solid #EFEFEF',borderRadius:16,overflow:'hidden',scrollSnapAlign:'start',background:'#fff',transition:'all 0.3s',flexShrink:0,cursor:'pointer'}}
-                onClick={() => window.location.href = '/events/my-city-our-music'}
-              >
-                <div style={{height:180,position:'relative',overflow:'hidden'}}>
-                  <img src="/event-flyer.png" alt="My City Our Music" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} />
-                  <div style={{position:'absolute',top:12,left:12,background:'#0052FF',color:'#fff',fontSize:10,fontWeight:600,letterSpacing:'1.5px',textTransform:'uppercase',padding:'4px 10px',borderRadius:100}}>Featured</div>
-                </div>
-                <div style={{padding:16}}>
-                  <div style={{fontSize:11,fontWeight:600,letterSpacing:1,textTransform:'uppercase',color:'#0052FF',marginBottom:4}}>Hip Hop TV &amp; Citiesabc Present</div>
-                  <div className="syne" style={{fontSize:17,fontWeight:700,letterSpacing:'-0.5px',marginBottom:8,lineHeight:1.2}}>My City Our Music</div>
-                  <div style={{fontSize:12,color:'#888888',display:'flex',flexDirection:'column',gap:3,marginBottom:12}}>
-                    <span>May 23, 2026</span>
-                    <span>Henry J. Kaiser Center · Oakland</span>
-                  </div>
-                  <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:14}}>
-                    {['Music','Creative Industries','AI Summit'].map(t => (
-                      <span key={t} style={{fontSize:11,background:'#F7F7F7',color:'#444444',border:'1px solid #EFEFEF',padding:'3px 8px',borderRadius:100}}>{t}</span>
-                    ))}
-                  </div>
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                    <div style={{fontSize:12,color:'#888888'}}><strong style={{color:'#0052FF'}}>3</strong> verified RSVPs</div>
-                    <button
-                      style={{background:'#0052FF',color:'#fff',border:'none',fontSize:12,fontWeight:600,padding:'7px 16px',borderRadius:7,cursor:'pointer',fontFamily:'DM Sans,sans-serif'}}
-                      onClick={e => { e.stopPropagation(); window.location.href = '/events/my-city-our-music'; }}
-                    >View Event</button>
-                  </div>
-                </div>
+            <div style={{ padding: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#0052FF', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                HipHopTV + Oakland XChange · Coalition 001
               </div>
-
-              {/* PLACEHOLDER CARDS */}
-              {[
-                {city:'Bay Area · Summer 2026',name:'Cultural Event TBA',tags:['Culture','Community']},
-                {city:'Los Angeles · Fall 2026',name:'Arts & Tech Summit TBA',tags:['Arts','Technology']},
-                {city:'New York · Winter 2026',name:'Creator Economy Forum TBA',tags:['Creators','Web3']},
-              ].map((ev,i) => (
-                <div key={i} style={{minWidth:300,maxWidth:300,border:'1px solid #EFEFEF',borderRadius:16,overflow:'hidden',scrollSnapAlign:'start',background:'#fff',transition:'all 0.3s',flexShrink:0,opacity:0.65}}>
-                  <div style={{height:180,background:['#111','#001a33','#0d1a0d'][i],display:'flex',alignItems:'center',justifyContent:'center',position:'relative'}}>
-                    <div style={{position:'absolute',top:12,left:12,background:'rgba(0,0,0,0.7)',color:'#fff',fontSize:10,fontWeight:600,letterSpacing:'1.5px',textTransform:'uppercase',padding:'4px 10px',borderRadius:100}}>Coming Soon</div>
-                    <span style={{fontFamily:'Syne,sans-serif',color:'rgba(255,255,255,0.4)',fontSize:13,fontWeight:700}}>Coming Soon</span>
-                  </div>
-                  <div style={{padding:16}}>
-                    <div style={{fontSize:11,fontWeight:600,letterSpacing:1,textTransform:'uppercase',color:'#aaa',marginBottom:4}}>{ev.city}</div>
-                    <div className="syne" style={{fontSize:17,fontWeight:700,letterSpacing:'-0.5px',marginBottom:8,lineHeight:1.2,color:'#aaa'}}>{ev.name}</div>
-                    <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:14}}>
-                      {ev.tags.map(t => <span key={t} style={{fontSize:11,background:'#F7F7F7',color:'#444444',border:'1px solid #EFEFEF',padding:'3px 8px',borderRadius:100}}>{t}</span>)}
-                    </div>
-                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                      <div style={{fontSize:12,color:'#aaa'}}>Announcing soon</div>
-                      <button style={{background:'#ccc',color:'#fff',border:'none',fontSize:12,fontWeight:600,padding:'7px 16px',borderRadius:7,cursor:'default',fontFamily:'DM Sans,sans-serif'}} onClick={() => showToast('Stay tuned!')}>Notify Me</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {/* HOST CTA CARD */}
-              <div
-                style={{minWidth:280,maxWidth:280,border:'2px dashed rgba(0,82,255,0.25)',borderRadius:16,background:'rgba(0,82,255,0.02)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'32px 24px',textAlign:'center',cursor:'pointer',scrollSnapAlign:'start',flexShrink:0,transition:'all 0.2s'}}
-                onClick={scrollToHost}
-              >
-                <div style={{width:48,height:48,background:'rgba(0,82,255,0.1)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:16,fontSize:22,color:'#0052FF',fontWeight:700}}>+</div>
-                <div className="syne" style={{fontSize:17,fontWeight:700,marginBottom:8,color:'#0052FF'}}>Host Your Event</div>
-                <div style={{fontSize:13,color:'#888888',lineHeight:1.5,marginBottom:18}}>Bring verifiable participation to your community with BASE bloc.</div>
-                <button style={{background:'#0052FF',color:'#fff',border:'none',fontSize:12,fontWeight:600,padding:'10px 20px',borderRadius:8,cursor:'pointer',fontFamily:'DM Sans,sans-serif'}}>Get Started</button>
-              </div>
-
-            </div>
-          </div>
-        </section>
-
-        <div style={{height:1,background:'#EFEFEF',margin:'0 24px'}}></div>
-
-        {/* HOST SECTION */}
-        <section id="host" style={{background:'#0A0A0A',color:'#fff',padding:'80px 24px'}}>
-          <div style={{maxWidth:900,margin:'0 auto',display:'grid',gridTemplateColumns:'1fr 1fr',gap:60,alignItems:'center'}}>
-            <div>
-              <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'rgba(0,82,255,0.8)',marginBottom:12}}>For Event Organizers</div>
-              <h2 className="syne" style={{fontSize:'clamp(28px,4vw,42px)',fontWeight:800,lineHeight:1.1,letterSpacing:'-1.5px',marginBottom:16}}>
-                Host an event.<br /><span style={{color:'#0052FF'}}>Make it onchain.</span>
-              </h2>
-              <p style={{fontSize:15,lineHeight:1.7,color:'rgba(255,255,255,0.6)',marginBottom:28}}>
-                Run a venue, a festival, or a community gathering? BASE bloc gives your attendees permanent, verifiable proof of participation — no tickets to lose, no receipts to forget.
-              </p>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
-                {[
-                  {num:'100%',label:'Gasless for attendees via Coinbase Paymaster'},
-                  {num:'$0',label:'Cost for attendees to claim their verified record'},
-                ].map(s => (
-                  <div key={s.num} style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:12,padding:20}}>
-                    <div className="syne" style={{fontSize:32,fontWeight:800,color:'#0052FF',marginBottom:4}}>{s.num}</div>
-                    <div style={{fontSize:13,color:'rgba(255,255,255,0.5)',lineHeight:1.4}}>{s.label}</div>
-                  </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+                {['Music', 'Creative Industries', 'AI Summit'].map(t => (
+                  <span key={t} style={{ background: '#F7F7F7', border: '1px solid #EFEFEF', borderRadius: 6, fontSize: 11, padding: '3px 8px', color: '#444' }}>{t}</span>
                 ))}
               </div>
-              <div style={{display:'flex',alignItems:'flex-start',gap:12,padding:16,background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:10,marginTop:20}}>
-                <div style={{width:32,height:32,background:'rgba(0,82,255,0.2)',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:14}}>⬡</div>
-                <div>
-                  <div style={{fontSize:13,fontWeight:600,color:'#fff',marginBottom:3}}>Works inside the Base App</div>
-                  <div style={{fontSize:12,color:'rgba(255,255,255,0.45)',lineHeight:1.4}}>BASE bloc is a native Mini App — your attendees tap, connect wallet, and RSVP in seconds. No downloads needed.</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, color: '#888' }}>
+                  <strong style={{ color: '#0A0A0A' }}>{rsvpCount ?? '—'}</strong> verified RSVPs
+                </span>
+                <button
+                  style={{ background: '#0052FF', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
+                >
+                  RSVP on Base
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Coming Soon Cards */}
+          {[
+            { loc: 'Bay Area', time: 'Summer 2026', title: 'Cultural Event TBA', tags: ['Culture', 'Community'] },
+            { loc: 'Los Angeles', time: 'Fall 2026', title: 'Arts & Tech Summit TBA', tags: ['Arts', 'Technology'] },
+          ].map(c => (
+            <div key={c.loc} className="event-card" style={{ background: '#F7F7F7', border: '1px solid #EFEFEF', borderRadius: 16, overflow: 'hidden', opacity: 0.7 }}>
+              <div style={{ background: '#E8E8E8', height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: '#bbb', fontSize: 13 }}>Coming Soon</span>
+              </div>
+              <div style={{ padding: 20 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#888', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>{c.loc} · {c.time}</div>
+                <div className="syne" style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, color: '#888' }}>{c.title}</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+                  {c.tags.map(t => (
+                    <span key={t} style={{ background: '#E0E0E0', borderRadius: 6, fontSize: 11, padding: '3px 8px', color: '#888' }}>{t}</span>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, color: '#aaa' }}>BASEbloc.org network</span>
+                  <button style={{ background: 'none', border: '1px solid #ccc', borderRadius: 7, padding: '6px 12px', fontSize: 12, color: '#aaa', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                    Notify Me
+                  </button>
                 </div>
               </div>
             </div>
-            <div style={{display:'flex',flexDirection:'column',gap:12}}>
-              <div className="syne" style={{fontSize:22,fontWeight:700,color:'#fff',marginBottom:4}}>Bring BASE bloc to your event</div>
-              <div style={{fontSize:13,color:'rgba(255,255,255,0.45)',marginBottom:4}}>Tell us about your event and we&apos;ll be in touch.</div>
-              {(['name','email','event'] as const).map(f => (
-                <input
-                  key={f}
-                  style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:10,padding:'13px 16px',fontFamily:'DM Sans,sans-serif',fontSize:14,color:'#fff'}}
-                  placeholder={f === 'name' ? 'Your name' : f === 'email' ? 'Email address' : 'Event name & city'}
-                  value={hostForm[f]}
-                  onChange={e => setHostForm(p => ({...p,[f]:e.target.value}))}
-                />
-              ))}
-              <select
-                style={{background:'rgba(255,255,255,0.07)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:10,padding:'13px 16px',fontFamily:'DM Sans,sans-serif',fontSize:14,color:'rgba(255,255,255,0.5)',appearance:'none'}}
-                value={hostForm.size}
-                onChange={e => setHostForm(p => ({...p,size:e.target.value}))}
-              >
-                <option value="" disabled>Expected attendance size</option>
-                <option>Under 100 people</option>
-                <option>100–500 people</option>
-                <option>500+ people</option>
-              </select>
-              <button
-                style={{background:'#0052FF',color:'#fff',border:'none',borderRadius:10,padding:14,fontFamily:'DM Sans,sans-serif',fontSize:15,fontWeight:600,cursor:'pointer'}}
-                onClick={handleHostSubmit}
-              >Submit Inquiry</button>
-              <div style={{fontSize:12,color:'rgba(255,255,255,0.35)',textAlign:'center'}}>We&apos;ll respond within 48 hours. No spam, ever.</div>
+          ))}
+        </div>
+      </section>
+
+      {/* HOST SECTION */}
+      <section id="host" style={{ padding: '80px 24px', background: '#F7F7F7' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: '#0052FF', marginBottom: 16 }}>For Coalition Organizers</div>
+            <div className="syne" style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 800, lineHeight: 1.1, marginBottom: 20 }}>
+              Power your coalition activation.{' '}
+              <span style={{ color: '#0052FF' }}>Make participation onchain.</span>
+            </div>
+            <p style={{ fontSize: 16, lineHeight: 1.7, color: '#666', marginBottom: 24 }}>
+              BASEbloc.app powers the participation layer for BASEbloc.org coalitions and aligned collaborators — from RSVP to check-in to permanent onchain records. No tickets to lose. No receipts to forget.
+            </p>
+            <div style={{ display: 'flex', gap: 32, marginBottom: 24 }}>
+              <div>
+                <div className="syne" style={{ fontSize: 32, fontWeight: 800, color: '#0052FF' }}>100%</div>
+                <div style={{ fontSize: 12, color: '#888' }}>Gasless for attendees via Coinbase Paymaster</div>
+              </div>
+              <div>
+                <div className="syne" style={{ fontSize: 32, fontWeight: 800, color: '#0052FF' }}>$0</div>
+                <div style={{ fontSize: 12, color: '#888' }}>Cost for attendees to obtain onchain records</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 8, height: 8, background: '#0052FF', borderRadius: '50%' }}></div>
+              <span style={{ fontSize: 14, color: '#666' }}>Works inside the Base App — native Mini App experience</span>
             </div>
           </div>
-        </section>
 
-        {/* HOW IT WORKS */}
-        <section style={{padding:'80px 24px',background:'#fff'}} id="how-it-works">
-          <div style={{maxWidth:1000,margin:'0 auto'}}>
-            <div style={{textAlign:'center',marginBottom:64}}>
-              <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#0052FF',marginBottom:8}}>How it works</div>
-              <div className="syne" style={{fontSize:'clamp(24px,4vw,36px)',fontWeight:700,letterSpacing:'-1px',marginBottom:8}}>Participation you can prove.</div>
-              <div style={{fontSize:15,color:'#888888',maxWidth:520,margin:'0 auto'}}>BASE bloc combines existing infrastructure to create something new: a permanent, portable record of your real-world cultural life.</div>
-            </div>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 32, border: '1px solid #EFEFEF' }}>
+            <div className="syne" style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Bring BASEbloc.app to your event</div>
+            <p style={{ fontSize: 14, color: '#888', marginBottom: 24 }}>Tell us about your event and we'll be in touch.</p>
+            {[
+              { placeholder: 'Your name', type: 'text' },
+              { placeholder: 'Email address', type: 'email' },
+              { placeholder: 'Event name & city', type: 'text' },
+              { placeholder: 'Expected attendance size', type: 'text' },
+            ].map(f => (
+              <input
+                key={f.placeholder}
+                type={f.type}
+                placeholder={f.placeholder}
+                style={{ width: '100%', padding: '12px 16px', border: '1.5px solid #EFEFEF', borderRadius: 8, fontSize: 14, fontFamily: 'DM Sans, sans-serif', marginBottom: 12, outline: 'none', boxSizing: 'border-box' }}
+              />
+            ))}
+            <button style={{ width: '100%', padding: 14, background: '#0052FF', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+              Submit Inquiry
+            </button>
+            <p style={{ fontSize: 11, color: '#aaa', marginTop: 12, textAlign: 'center' }}>
+              Part of the BASEbloc.org network
+            </p>
+          </div>
+        </div>
+      </section>
 
+      {/* HOW IT WORKS */}
+      <section style={{ padding: '80px 24px', textAlign: 'center' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: '#0052FF', marginBottom: 12 }}>How It Works</div>
+          <div className="syne" style={{ fontSize: 'clamp(24px,4vw,36px)', fontWeight: 800, marginBottom: 12 }}>Participation you can prove.</div>
+          <p style={{ fontSize: 16, color: '#888', marginBottom: 60, maxWidth: 500, margin: '0 auto 60px' }}>
+            BASEbloc.app combines existing infrastructure to create something new: a permanent, portable record of your real-world cultural life.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 32, textAlign: 'left' }}>
             {[
               {
-                num:'Step 01',
-                title:'Connect your wallet in the Base App',
-                desc:'BASE bloc lives natively inside the Base App — no download, no account. Open the Mini App, connect your Coinbase Smart Wallet, and you\'re in. It takes about 10 seconds.',
-                visual: (
-                  <div style={{textAlign:'center'}}>
-                    <div style={{background:'#0052FF',color:'#fff',display:'inline-flex',alignItems:'center',gap:8,padding:'10px 18px',borderRadius:100,fontSize:13,fontWeight:600,marginBottom:16}}>⬡ Wallet Connected</div>
-                    <div style={{fontSize:13,color:'#888888',marginBottom:12}}>0x2E05...E2d</div>
-                    <div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:10,padding:12,fontSize:12,color:'#444444',textAlign:'center'}}>
-                      <div style={{fontWeight:600,marginBottom:4}}>Base App · Mini App</div>
-                      <div style={{color:'#888888'}}>No gas required for attendees</div>
-                    </div>
-                  </div>
-                )
+                step: '01',
+                title: 'Connect your wallet in the Base App',
+                body: 'BASEbloc.app lives natively inside the Base App — no download, no account. Open the Mini App, connect your Coinbase Smart Wallet, and you\'re in. About 10 seconds.',
+                tag: 'Wallet Connected · No gas required'
               },
               {
-                num:'Step 02',
-                title:'RSVP, check in, or take part',
-                desc:'Find an event on the Discover tab, RSVP, and check in when you arrive. Or participate with a BASE bloc collaborator in a recognized action — teaching, building, creating. Every verified participation is attested to the blockchain via EAS. Gas is fully covered.',
-                visual: (
-                  <div style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:12,padding:16,width:'100%'}}>
-                    <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
-                      <div style={{width:36,height:36,background:'#0052FF',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><span style={{color:'#fff',fontSize:16}}>✓</span></div>
-                      <div><div style={{fontSize:13,fontWeight:600}}>Participation Attested</div><div style={{fontSize:11,color:'#888888'}}>My City Our Music · Base</div></div>
-                    </div>
-                    {[['Event','MY CITY OUR MUSIC'],['Date','May 23, 2026'],['Network','Base (L2)'],['Gas cost','$0.00 (sponsored)']].map(([k,v]) => (
-                      <div key={k} style={{display:'flex',justifyContent:'space-between',fontSize:11,padding:'4px 0',borderBottom:'1px solid #EFEFEF'}}>
-                        <span style={{color:'#888888'}}>{k}</span><span style={{fontWeight:500,color:'#0052FF'}}>{v}</span>
-                      </div>
-                    ))}
-                  </div>
-                )
+                step: '02',
+                title: 'RSVP, check in, or take part',
+                body: 'Every verified participation inside a BASEbloc.org activation — starting with BASE Oakland bloc — is attested onchain via EAS. Gas is fully covered.',
+                tag: 'Participation Attested · $0.00 (sponsored)'
               },
               {
-                num:'Step 03',
-                title:'Your Records tab builds over time',
-                desc:'Every BASE bloc event you attend — and every time you participate with a BASE bloc collaborator in a way that\'s recognized — becomes a verified onchain record visible in your Records tab. Your participation history lives in your wallet, not a database someone else controls. It\'s yours, permanently.',
-                visual: (
-                  <div style={{width:'100%'}}>
-                    <div style={{fontSize:11,fontWeight:600,letterSpacing:1,textTransform:'uppercase',color:'#888888',marginBottom:10}}>Your Participation Records</div>
-                    <div style={{display:'flex',alignItems:'center',gap:12,padding:10,background:'#fff',border:'1px solid #EFEFEF',borderRadius:10,marginBottom:8}}>
-                      <div style={{width:8,height:8,background:'#0052FF',borderRadius:'50%',flexShrink:0}}></div>
-                      <div style={{fontSize:13,fontWeight:500,flex:1}}>My City Our Music</div>
-                      <div style={{fontSize:10,background:'rgba(0,82,255,0.1)',color:'#0052FF',padding:'3px 8px',borderRadius:100,fontWeight:600}}>Verified</div>
-                    </div>
-                    {['Future Event','Future Action'].map(n => (
-                      <div key={n} style={{display:'flex',alignItems:'center',gap:12,padding:10,background:'#fff',border:'1px solid #EFEFEF',borderRadius:10,marginBottom:8,opacity:0.4}}>
-                        <div style={{width:8,height:8,background:'#ccc',borderRadius:'50%',flexShrink:0}}></div>
-                        <div style={{fontSize:13,fontWeight:500,flex:1,color:'#aaa'}}>{n}</div>
-                        <div style={{fontSize:10,background:'#EFEFEF',color:'#aaa',padding:'3px 8px',borderRadius:100,fontWeight:600}}>Pending</div>
-                      </div>
-                    ))}
-                    <div style={{fontSize:12,color:'#0052FF',marginTop:10,fontWeight:500}}>Records grow with every action</div>
-                  </div>
-                )
+                step: '03',
+                title: 'Your Records tab builds over time',
+                body: 'Every BASEbloc.app-supported activation you attend becomes a portable onchain record that compounds across the network over time. It\'s yours, permanently.',
+                tag: 'Records grow with every action'
               },
               {
-                num:'Step 04 — The Bigger Picture',
-                title:'Participation becomes identity. Identity enables governance.',
-                desc:'Your onchain records become the foundation for community rewards, token distributions, and governance rights. BASE bloc is identity-first — we\'re building the layer that makes community power real, not just capital-driven.',
-                visual: (
-                  <div style={{textAlign:'center'}}>
-                    <div className="syne" style={{fontSize:16,fontWeight:700,marginBottom:6}}>What your records unlock</div>
-                    <div style={{fontSize:13,color:'#888888',lineHeight:1.5,marginBottom:14}}>A verified participation history that speaks for you.</div>
-                    <div style={{display:'flex',gap:6,justifyContent:'center',flexWrap:'wrap'}}>
-                      {['Community Rewards','Token Airdrops','Governance Rights','Collab Perks','Creator Access'].map(b => (
-                        <span key={b} style={{fontSize:11,background:'#EFEFEF',borderRadius:100,padding:'4px 10px',color:'#444444'}}>{b}</span>
-                      ))}
-                    </div>
-                  </div>
-                )
+                step: '04',
+                title: 'Participation becomes identity. Identity enables governance.',
+                body: 'These onchain records become the foundation for community, opportunity, impact and upwardly compounding value across BASEbloc.org. BASEbloc.app is the product layer that makes that portable and real.',
+                tag: 'Community Rewards · Token Airdrops · Governance Rights'
               },
-            ].map((step, i) => (
-              <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:60,alignItems:'center',padding:'60px 0',borderBottom: i < 3 ? '1px solid #EFEFEF' : 'none'}}>
-                <div style={i % 2 === 1 ? {order:2} : {}}>
-                  <div style={{fontSize:11,fontWeight:700,letterSpacing:3,textTransform:'uppercase',color:'#0052FF',marginBottom:12}}>{step.num}</div>
-                  <h3 className="syne" style={{fontSize:'clamp(22px,3vw,32px)',fontWeight:700,letterSpacing:'-1px',marginBottom:14,lineHeight:1.15}}>{step.title}</h3>
-                  <p style={{fontSize:15,lineHeight:1.75,color:'#888888'}}>{step.desc}</p>
-                </div>
-                <div style={{...(i % 2 === 1 ? {order:1} : {}),background:'#F7F7F7',borderRadius:16,padding:32,border:'1px solid #EFEFEF',minHeight:220,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  {step.visual}
-                </div>
+            ].map(s => (
+              <div key={s.step} style={{ padding: 28, background: s.step === '04' ? '#F7F7F7' : '#fff', border: '1px solid #EFEFEF', borderRadius: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: '#0052FF', marginBottom: 12 }}>STEP {s.step}</div>
+                <div className="syne" style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, lineHeight: 1.3 }}>{s.title}</div>
+                <p style={{ fontSize: 14, color: '#888', lineHeight: 1.7, marginBottom: 16 }}>{s.body}</p>
+                <div style={{ fontSize: 11, color: '#aaa', borderTop: '1px solid #EFEFEF', paddingTop: 12 }}>{s.tag}</div>
               </div>
             ))}
           </div>
-        </section>
-
-        {/* ECOSYSTEM */}
-        <section style={{background:'#F7F7F7',padding:'64px 24px'}}>
-          <div style={{maxWidth:900,margin:'0 auto',textAlign:'center'}}>
-            <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#0052FF',marginBottom:8}}>Built on</div>
-            <div className="syne" style={{fontSize:'clamp(24px,4vw,36px)',fontWeight:700,letterSpacing:'-1px',marginBottom:8}}>Powered by infrastructure you trust</div>
-            <div style={{fontSize:15,color:'#888888',marginBottom:40}}>BASE bloc is assembled from the most credible primitives in the Base ecosystem — combined with intent.</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:16}}>
-              {[
-                {icon:'⬡',name:'Base (L2)',desc:"Coinbase's L2. Fast, affordable, and trusted by millions."},
-                {icon:'🔏',name:'EAS',desc:'Ethereum Attestation Service — the standard for verifiable onchain claims.'},
-                {icon:'💳',name:'Coinbase Paymaster',desc:'Gas is fully sponsored for attendees. Zero cost to participate.'},
-                {icon:'📱',name:'Base Mini App',desc:'Native to the Base App. No downloads. Your community is already there.'},
-              ].map(e => (
-                <div key={e.name} className="eco-card" style={{background:'#fff',border:'1px solid #EFEFEF',borderRadius:14,padding:'24px 16px',textAlign:'center',transition:'all 0.2s'}}>
-                  <div style={{fontSize:24,marginBottom:10}}>{e.icon}</div>
-                  <div style={{fontSize:13,fontWeight:600,marginBottom:4}}>{e.name}</div>
-                  <div style={{fontSize:12,color:'#888888',lineHeight:1.4}}>{e.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* TAGLINE STRIP */}
-        <div style={{background:'#0052FF',color:'#fff',textAlign:'center',padding:'14px 24px',fontFamily:'Syne,sans-serif',fontSize:14,fontWeight:700,letterSpacing:'0.5px'}}>
-          Culture without tech doesn&apos;t scale. Tech without culture doesn&apos;t onboard everyone.
         </div>
+      </section>
 
-        {/* BELIEF / MISSION */}
-        <section style={{padding:'80px 24px',textAlign:'center',maxWidth:760,margin:'0 auto'}}>
-          <div style={{fontSize:11,fontWeight:600,letterSpacing:2,textTransform:'uppercase',color:'#0052FF',marginBottom:12}}>Our mission</div>
-          <div className="syne" style={{fontSize:'clamp(22px,4vw,36px)',fontWeight:700,lineHeight:1.25,letterSpacing:'-1px',marginBottom:24}}>
-            &ldquo;Showing up <span style={{color:'#0052FF'}}>is the most human thing you can do.</span> It should mean something permanent.&rdquo;
-          </div>
-          <p style={{fontSize:16,lineHeight:1.7,color:'#888888',marginBottom:36}}>
-            Concerts, summits, teaching, building, local events — millions of moments and actions happen every day that define who we are. BASE bloc gives those moments permanence, portability, and power. We&apos;re building the onchain layer for real-world participation, community, and empowerment.
+      {/* INFRASTRUCTURE */}
+      <section style={{ padding: '60px 24px', background: '#F7F7F7', textAlign: 'center' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: '#0052FF', marginBottom: 12 }}>Built On</div>
+          <div className="syne" style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 800, marginBottom: 12 }}>Powered by infrastructure you trust</div>
+          <p style={{ fontSize: 15, color: '#888', marginBottom: 40 }}>
+            BASEbloc.app is assembled from the most credible primitives in the Base ecosystem — combined with intent.
           </p>
-          <div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}>
-            <button
-              style={{padding:'14px 28px',borderRadius:10,fontSize:15,fontWeight:500,fontFamily:'DM Sans,sans-serif',cursor:'pointer',background:'#0052FF',color:'#fff',border:'none',transition:'all 0.2s'}}
-              onClick={() => document.getElementById('events')?.scrollIntoView({behavior:'smooth'})}
-            >Find an Event</button>
-            <button
-              className="btn-lg-secondary"
-              style={{padding:'14px 28px',borderRadius:10,fontSize:15,fontWeight:500,fontFamily:'DM Sans,sans-serif',cursor:'pointer',background:'#fff',color:'#0A0A0A',border:'1.5px solid #CCCCCC',transition:'all 0.2s'}}
-              onClick={scrollToHost}
-            >Host with BASE bloc</button>
-          </div>
-        </section>
-
-        {/* FOOTER */}
-        <footer style={{background:'#0A0A0A',color:'rgba(255,255,255,0.5)',padding:'40px 24px',textAlign:'center'}}>
-          <div className="syne" style={{fontWeight:800,fontSize:18,color:'#fff',marginBottom:8}}>BASE <span style={{color:'#0052FF'}}>bloc</span></div>
-          <p style={{fontSize:13,marginBottom:4}}>The onchain layer for real-world participation, community, and empowerment.</p>
-          <p style={{fontSize:13,color:'#0052FF',fontWeight:600,marginTop:6,fontFamily:'Syne,sans-serif',letterSpacing:'0.3px'}}>Power to the People. Onchain.</p>
-          <p style={{fontSize:11,marginTop:4}}>Built on Base · Powered by EAS · basebloc.app</p>
-          <div style={{display:'flex',gap:20,justifyContent:'center',marginTop:16,fontSize:12}}>
-            {['Discover','Records','Host an Event','About'].map(l => (
-              <a key={l} href="#" style={{color:'rgba(255,255,255,0.4)',textDecoration:'none'}}>{l}</a>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+            {[
+              { name: 'Base (L2)', desc: "Coinbase's L2. Fast, affordable, and trusted by millions." },
+              { name: 'EAS', desc: 'Ethereum Attestation Service — the standard for verifiable onchain claims.' },
+              { name: 'Coinbase Paymaster', desc: 'Gas is fully sponsored for attendees. Zero cost to participate.' },
+              { name: 'Base Mini App', desc: 'Native to the Base App. No downloads. Your community is already there.' },
+            ].map(i => (
+              <div key={i.name} style={{ background: '#fff', borderRadius: 12, padding: 24, border: '1px solid #EFEFEF' }}>
+                <div className="syne" style={{ fontWeight: 700, fontSize: 15, marginBottom: 8 }}>{i.name}</div>
+                <p style={{ fontSize: 13, color: '#888', lineHeight: 1.6 }}>{i.desc}</p>
+              </div>
             ))}
           </div>
-        </footer>
+          <p style={{ marginTop: 32, fontSize: 14, color: '#aaa', fontStyle: 'italic' }}>
+            Culture without tech doesn't scale. Tech without culture doesn't onboard everyone.
+          </p>
+        </div>
+      </section>
 
-      </div>
+      {/* MISSION */}
+      <section style={{ padding: '80px 24px', textAlign: 'center' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', color: '#0052FF', marginBottom: 12 }}>Our Mission</div>
+          <div className="syne" style={{ fontSize: 'clamp(22px,4vw,36px)', fontWeight: 700, lineHeight: 1.25, letterSpacing: '-1px', marginBottom: 24 }}>
+            &ldquo;Showing up <span style={{ color: '#0052FF' }}>is the most human thing you can do.</span> It should mean something permanent.&rdquo;
+          </div>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: '#888888', marginBottom: 24 }}>
+            Concerts, summits, teaching, building, local events — millions of moments and actions happen every day that define who we are. BASEbloc.app gives those moments community, opportunity, impact and upwardly compounding value.
+          </p>
+          <p style={{ fontSize: 15, lineHeight: 1.7, color: '#555', marginBottom: 36, fontWeight: 500 }}>
+            Not a single app. Not a single event. A repeatable model — coalition by coalition, city by city — where every activation builds on the last. The long-term value is the network itself. And it&apos;s already live.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' })}
+              style={{ padding: '14px 28px', borderRadius: 10, fontSize: 15, fontWeight: 500, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', background: '#0052FF', color: '#fff', border: 'none', transition: 'all 0.2s' }}
+            >
+              Find an Event
+            </button>
+            <button
+              onClick={() => document.getElementById('host')?.scrollIntoView({ behavior: 'smooth' })}
+              style={{ padding: '14px 28px', borderRadius: 10, fontSize: 15, fontWeight: 500, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', background: '#fff', color: '#0A0A0A', border: '1.5px solid #CCCCCC', transition: 'all 0.2s' }}
+            >
+              Host with BASE bloc
+            </button>
+          </div>
+        </div>
+      </section>
 
-      {/* TOAST */}
-      <div style={{
-        position:'fixed',bottom:24,left:'50%',transform:toastVisible ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(100px)',
-        background:'#0A0A0A',color:'#fff',padding:'12px 24px',borderRadius:10,fontSize:14,fontWeight:500,
-        transition:'transform 0.4s',zIndex:999,pointerEvents:'none',whiteSpace:'nowrap'
-      }}>{toast}</div>
+      {/* FOOTER */}
+      <footer style={{ background: '#0A0A0A', color: 'rgba(255,255,255,0.5)', padding: '48px 24px', textAlign: 'center' }}>
+        <div className="syne" style={{ fontWeight: 800, fontSize: 18, color: '#fff', marginBottom: 8 }}>
+          BASE <span style={{ color: '#0052FF' }}>bloc</span>
+        </div>
+        <p style={{ fontSize: 13, marginBottom: 4 }}>Building community, opportunity, impact and upwardly compounding value — onchain.</p>
+        <p style={{ fontSize: 13, color: '#0052FF', fontWeight: 600, marginTop: 6, fontFamily: "'Inter Tight', sans-serif", letterSpacing: '0.3px' }}>
+          Power to the People. Onchain.
+        </p>
+
+        {/* Hierarchy block */}
+        <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.08)', fontSize: 12, lineHeight: 2, color: 'rgba(255,255,255,0.35)' }}>
+          <a href="https://basebloc.org" target="_blank" rel="noopener noreferrer" style={{ color: '#0052FF', textDecoration: 'none', fontWeight: 600 }}>BASEbloc.org</a>
+          {' '}· The city-by-city umbrella network{' · '}
+          <a href="https://baseoak.org" target="_blank" rel="noopener noreferrer" style={{ color: '#0052FF', textDecoration: 'none', fontWeight: 600 }}>BASEoak.org</a>
+          {' '}· Coalition 001 — Oakland{' · '}
+          <span style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>BASEbloc.app</span>
+          {' '}· The infrastructure layer
+        </div>
+
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 16 }}>
+          Native to Base App · Powered by EAS · Built by{' '}
+          <a href="https://baseoak.org" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}>Orangessance</a>
+          {' '}· © {new Date().getFullYear()} BASEbloc
+        </p>
+
+        <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 16, fontSize: 12 }}>
+          {[
+            { label: 'Discover', href: '#events' },
+            { label: 'My Records', href: '#' },
+            { label: 'Host an Event', href: '#host' },
+            { label: 'baseoak.org', href: 'https://baseoak.org', external: true },
+            { label: 'basebloc.org', href: 'https://basebloc.org', external: true },
+          ].map(l => (
+            <a
+              key={l.label}
+              href={l.href}
+              target={l.external ? '_blank' : undefined}
+              rel={l.external ? 'noopener noreferrer' : undefined}
+              style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none', transition: 'color 0.2s' }}
+            >
+              {l.label}
+            </a>
+          ))}
+        </div>
+      </footer>
     </>
   );
 }
