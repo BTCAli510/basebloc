@@ -10,6 +10,7 @@ const easSdkCjs = path.resolve(
 );
 
 const nextConfig: NextConfig = {
+  turbopack: {},
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.resolve.alias = {
