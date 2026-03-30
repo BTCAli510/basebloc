@@ -2,9 +2,25 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAccount } from "wagmi";
+import { ConnectWallet } from "@coinbase/onchainkit/wallet";
+import { useName } from "@coinbase/onchainkit/identity";
+import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
+import { base } from "viem/chains";
+
+const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
+const SCHEMA_UID = "0xe75ec39ab8bfdd680f02b11817ed9e10556850278264c0917d645c73866784d9";
+const BUILDER_CODE_DATA_SUFFIX = "0x62635f37736474747335310b0080218021802180218021802180218021";
 
 export default function MyCityOurMusicPage() {
+  const { address, isConnected, connector } = useAccount();
+  const { data: basename } = useName({ address, chain: base });
   const [countdown, setCountdown] = useState({ days: '00', hrs: '00', min: '00', sec: '00' });
+  const [rsvpState, setRsvpState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [attestationUID, setAttestationUID] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState('');
+  const [nameEdited, setNameEdited] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     const target = new Date('2026-05-23T10:00:00-07:00');
@@ -26,6 +42,114 @@ export default function MyCityOurMusicPage() {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (basename && !nameEdited) setDisplayName(basename as string);
+  }, [basename, nameEdited]);
+
+  const finalDisplayName = displayName.trim() || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Guest');
+
+  async function handleRSVP() {
+    if (!connector || !address) return;
+    setRsvpState('loading');
+    setErrorMsg('');
+    try {
+      const schemaEncoder = new SchemaEncoder(
+        'string eventName,string eventDate,string coalition,bool attending,string ticketTier,string displayName'
+      );
+      const encoded = schemaEncoder.encodeData([
+        { name: 'eventName', value: 'MY CITY OUR MUSIC', type: 'string' },
+        { name: 'eventDate', value: '2026-05-23', type: 'string' },
+        { name: 'coalition', value: 'BASE Oakland bloc', type: 'string' },
+        { name: 'attending', value: true, type: 'bool' },
+        { name: 'ticketTier', value: 'General', type: 'string' },
+        { name: 'displayName', value: finalDisplayName, type: 'string' },
+      ]);
+
+      const { encodeFunctionData } = await import('viem');
+      const EAS_ABI = [{
+        name: 'attest',
+        type: 'function',
+        inputs: [{
+          name: 'request', type: 'tuple',
+          components: [
+            { name: 'schema', type: 'bytes32' },
+            {
+              name: 'data', type: 'tuple',
+              components: [
+                { name: 'recipient', type: 'address' },
+                { name: 'expirationTime', type: 'uint64' },
+                { name: 'revocable', type: 'bool' },
+                { name: 'refUID', type: 'bytes32' },
+                { name: 'data', type: 'bytes' },
+                { name: 'value', type: 'uint256' },
+              ]
+            }
+          ]
+        }],
+        outputs: [{ name: '', type: 'bytes32' }],
+        stateMutability: 'payable',
+      }] as const;
+
+      const calldata = encodeFunctionData({
+        abi: EAS_ABI,
+        functionName: 'attest',
+        args: [{
+          schema: SCHEMA_UID as `0x${string}`,
+          data: {
+            recipient: address,
+            expirationTime: BigInt(0),
+            revocable: true,
+            refUID: '0x0000000000000000000000000000000000000000000000000000000000000000',
+            data: encoded as `0x${string}`,
+            value: BigInt(0),
+          }
+        }]
+      });
+
+      const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
+      const provider = await connector.getProvider();
+      await (provider as any).request({
+        method: 'wallet_sendCalls',
+        params: [{
+          version: '1.0',
+          chainId: '0x2105',
+          from: address,
+          calls: [{ to: EAS_CONTRACT, data: calldata, value: '0x0' }],
+          capabilities: paymasterUrl ? { paymasterService: { url: paymasterUrl } } : {},
+          ...(BUILDER_CODE_DATA_SUFFIX ? { dataSuffix: BUILDER_CODE_DATA_SUFFIX } : {}),
+        }]
+      });
+
+      let uid: string | null = null;
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+        const res = await fetch('https://base.easscan.org/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `query {
+              attestations(
+                where: { attester: { equals: "${address}" }, schemaId: { equals: "${SCHEMA_UID}" } }
+                orderBy: { timeCreated: desc }
+                take: 1
+              ) { id }
+            }`
+          })
+        });
+        const json = await res.json();
+        uid = json?.data?.attestations?.[0]?.id ?? null;
+        if (uid) break;
+      }
+
+      setAttestationUID(uid);
+      setRsvpState('success');
+    } catch (e: any) {
+      console.error('[handleRSVP] error:', e);
+      setErrorMsg(e?.message || 'Something went wrong. Please try again.');
+      setRsvpState('error');
+    }
+  }
 
   return (
     <>
@@ -100,12 +224,60 @@ export default function MyCityOurMusicPage() {
         >
           Get Tickets — from 25 USDC
         </Link>
-        <Link
-          href="/mini"
-          style={{display:'block',width:'100%',background:'#fff',color:'#0052FF',border:'2px solid #0052FF',borderRadius:12,padding:16,fontFamily:'Syne,sans-serif',fontSize:16,fontWeight:700,cursor:'pointer',marginBottom:12,letterSpacing:'-0.5px',textAlign:'center',textDecoration:'none',transition:'opacity 0.2s'}}
-        >
-          RSVP on Base — Free
-        </Link>
+        {/* RSVP FLOW */}
+        {rsvpState === 'success' ? (
+          <div style={{background:'#F0F7FF',border:'1.5px solid #0052FF',borderRadius:12,padding:20,marginBottom:12,textAlign:'center'}}>
+            <div style={{fontSize:22,marginBottom:6}}>✓</div>
+            <div className="syne" style={{fontSize:16,fontWeight:700,color:'#0052FF',marginBottom:4}}>You&apos;re on the list.</div>
+            <div style={{fontSize:13,color:'#888888',marginBottom:attestationUID ? 8 : 0}}>
+              Your RSVP is recorded onchain via EAS.
+            </div>
+            {attestationUID && (
+              <a
+                href={`https://base.easscan.org/attestation/view/${attestationUID}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{fontSize:12,color:'#0052FF',textDecoration:'underline'}}
+              >
+                View attestation →
+              </a>
+            )}
+          </div>
+        ) : !isConnected ? (
+          <div style={{border:'1.5px solid #EFEFEF',borderRadius:12,padding:20,marginBottom:12,textAlign:'center'}}>
+            <div style={{fontSize:14,color:'#888888',marginBottom:12}}>
+              Connect your wallet to RSVP onchain — free, gas sponsored.
+            </div>
+            <ConnectWallet />
+          </div>
+        ) : (
+          <div style={{border:'1.5px solid #EFEFEF',borderRadius:12,padding:20,marginBottom:12}}>
+            <div style={{marginBottom:14}}>
+              <label style={{display:'block',fontSize:12,fontWeight:600,marginBottom:6,color:'#444444'}}>
+                Display Name (optional)
+              </label>
+              <input
+                value={displayName}
+                onChange={e => { setDisplayName(e.target.value); setNameEdited(true); }}
+                placeholder="Your name or handle"
+                style={{width:'100%',padding:'10px 14px',border:'1.5px solid #EFEFEF',borderRadius:8,fontSize:14,fontFamily:'DM Sans,sans-serif',outline:'none',boxSizing:'border-box'}}
+              />
+              <p style={{fontSize:11,color:'#aaa',marginTop:5}}>
+                {basename ? 'Pre-filled from your Basename — edit freely' : 'Optional — leave blank to use your wallet address'}
+              </p>
+            </div>
+            <button
+              onClick={handleRSVP}
+              disabled={rsvpState === 'loading'}
+              style={{display:'block',width:'100%',background:rsvpState === 'loading' ? '#aaa' : '#fff',color:rsvpState === 'loading' ? '#fff' : '#0052FF',border:'2px solid ' + (rsvpState === 'loading' ? '#aaa' : '#0052FF'),borderRadius:10,padding:14,fontFamily:'Syne,sans-serif',fontSize:16,fontWeight:700,cursor:rsvpState === 'loading' ? 'not-allowed' : 'pointer',letterSpacing:'-0.5px',textAlign:'center',transition:'all 0.2s'}}
+            >
+              {rsvpState === 'loading' ? 'Attesting to Base...' : 'RSVP on Base — Free'}
+            </button>
+            {rsvpState === 'error' && (
+              <p style={{color:'red',fontSize:13,marginTop:10}}>{errorMsg}</p>
+            )}
+          </div>
+        )}
         <p style={{textAlign:'center',fontSize:12,color:'#888888',lineHeight:1.6,marginBottom:32}}>
           Ticket required for entry · RSVP signals intent · Verified attendance is recorded at check-in
         </p>

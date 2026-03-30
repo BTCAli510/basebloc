@@ -629,7 +629,7 @@ export default function Home() {
           <div
             className="event-card"
             style={{ background: '#fff', border: '2px solid #0052FF', borderRadius: 16, overflow: 'hidden', cursor: 'pointer' }}
-            onClick={() => setActivePage('event')}
+            onClick={() => window.location.href = '/events/my-city-our-music'}
           >
             <div style={{ position: 'relative' }}>
               <div style={{ position: 'absolute', top: 10, left: 10, background: '#0052FF', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 4, letterSpacing: 1, zIndex: 2 }}>FEATURED</div>
@@ -652,11 +652,20 @@ export default function Home() {
                 <span style={{ fontSize: 13, color: '#888' }}>
                   <strong style={{ color: '#0A0A0A' }}>{rsvpCount ?? '—'}</strong> verified RSVPs
                 </span>
-                <button
-                  style={{ background: '#0052FF', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
-                >
-                  RSVP on Base
-                </button>
+                <div style={{ display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={() => window.location.href = '/tickets'}
+                    style={{ background: '#0052FF', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
+                  >
+                    Get Tickets
+                  </button>
+                  <button
+                    onClick={() => window.location.href = '/events/my-city-our-music'}
+                    style={{ background: '#fff', color: '#0052FF', border: '1.5px solid #0052FF', borderRadius: 7, padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
+                  >
+                    RSVP on Base
+                  </button>
+                </div>
               </div>
             </div>
           </div>
