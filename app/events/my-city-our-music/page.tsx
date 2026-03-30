@@ -114,7 +114,7 @@ export default function MyCityOurMusicPage() {
         <div style={{marginBottom:32}}>
           <h3 className="syne" style={{fontSize:20,fontWeight:700,letterSpacing:'-0.5px',marginBottom:16}}>How it works</h3>
           {[
-            {step:'1',title:'RSVP or Buy a Ticket',desc:'Connect your wallet and claim your place. Free RSVP or paid ticket — both create an onchain record.'},
+            {step:'1',title:'RSVP or Buy a Ticket',desc:'Connect your wallet and claim your place. Free RSVP or paid ticket — connect your wallet and claim your place.'},
             {step:'2',title:'Check in at the event',desc:'BASE bloc staff verify you in person at the door. No app required — just your wallet.'},
             {step:'3',title:'Your attendance is recorded',desc:'Verified onchain and tied to your wallet. A permanent credential that travels with you.'},
           ].map(r => (
