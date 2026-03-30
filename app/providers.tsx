@@ -2,7 +2,8 @@
 import type { ReactNode } from "react";
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createConfig, http, WagmiProvider } from "wagmi";
+import { createConfig, http, unstable_connector, WagmiProvider } from "wagmi";
+import { fallback } from "viem";
 import { base } from "wagmi/chains";
 import { coinbaseWallet } from "wagmi/connectors";
 
@@ -14,7 +15,7 @@ const connector = coinbaseWallet({
 const wagmiConfig = createConfig({
   chains: [base],
   connectors: [connector],
-  transports: { [base.id]: http() },
+  transports: { [base.id]: fallback([unstable_connector(connector as any), http()]) },
 });
 
 const queryClient = new QueryClient();
