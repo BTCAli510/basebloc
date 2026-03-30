@@ -18,7 +18,7 @@ const wagmiConfig = createConfig({
   // unstable_connector routes wallet methods (wallet_sendCalls, eth_sendTransaction, etc.)
   // through the Coinbase Wallet provider; http() handles public RPC reads as fallback.
   // Fixes viem@2.x "this request method is not supported" on sponsored transactions.
-  transports: { [base.id]: fallback([unstable_connector(connector), http()]) },
+  transports: { [base.id]: fallback([unstable_connector(connector) as any, http()]) },
 });
 
 const queryClient = new QueryClient();
