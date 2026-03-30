@@ -18,6 +18,12 @@ const nextConfig: NextConfig = {
         '@ethereum-attestation-service/eas-sdk': easSdkCjs,
       };
     }
+    // wagmi/connectors barrel pulls in @metamask/sdk which requires the React
+    // Native async-storage module. Stub it out — this is a web-only app.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@react-native-async-storage/async-storage': false,
+    };
     return config;
   },
 };

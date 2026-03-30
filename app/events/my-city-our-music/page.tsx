@@ -109,6 +109,7 @@ export default function MyCityOurMusicPage() {
 
       const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
       const provider = await connector.getProvider();
+      console.log('[handleRSVP] provider type:', Object.prototype.toString.call(provider), 'constructor:', (provider as any)?.constructor?.name);
       await (provider as any).request({
         method: 'wallet_sendCalls',
         params: [{
@@ -146,6 +147,9 @@ export default function MyCityOurMusicPage() {
       setRsvpState('success');
     } catch (e: any) {
       console.error('[handleRSVP] error:', e);
+      console.error('[handleRSVP] message:', e?.message);
+      console.error('[handleRSVP] code:', e?.code);
+      console.error('[handleRSVP] stack:', e?.stack);
       setErrorMsg(e?.message || 'Something went wrong. Please try again.');
       setRsvpState('error');
     }
