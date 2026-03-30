@@ -93,16 +93,39 @@ export default function MyCityOurMusicPage() {
           ))}
         </div>
 
-        {/* RSVP BUTTON — links to /mini for the actual onchain flow */}
+        {/* CTAs */}
         <Link
-          href="/mini"
-          className="rsvp-btn"
+          href="/tickets"
           style={{display:'block',width:'100%',background:'#0052FF',color:'#fff',border:'none',borderRadius:12,padding:18,fontFamily:'Syne,sans-serif',fontSize:17,fontWeight:700,cursor:'pointer',marginBottom:12,letterSpacing:'-0.5px',textAlign:'center',textDecoration:'none',transition:'background 0.2s'}}
         >
-          RSVP on Base
+          Get Tickets — from 25 USDC
         </Link>
-        <div style={{textAlign:'center',fontSize:12,color:'#888888',marginBottom:32}}>
-          Opens in the Base App · Powered onchain by BASE bloc · Gas sponsored
+        <Link
+          href="/mini"
+          style={{display:'block',width:'100%',background:'#fff',color:'#0052FF',border:'2px solid #0052FF',borderRadius:12,padding:16,fontFamily:'Syne,sans-serif',fontSize:16,fontWeight:700,cursor:'pointer',marginBottom:12,letterSpacing:'-0.5px',textAlign:'center',textDecoration:'none',transition:'opacity 0.2s'}}
+        >
+          RSVP on Base — Free
+        </Link>
+        <p style={{textAlign:'center',fontSize:12,color:'#888888',lineHeight:1.6,marginBottom:32}}>
+          Ticket required for entry · RSVP signals intent · Verified attendance is recorded at check-in
+        </p>
+
+        {/* HOW IT WORKS */}
+        <div style={{marginBottom:32}}>
+          <h3 className="syne" style={{fontSize:20,fontWeight:700,letterSpacing:'-0.5px',marginBottom:16}}>How it works</h3>
+          {[
+            {step:'1',title:'RSVP or Buy a Ticket',desc:'Connect your wallet and claim your place. Free RSVP or paid ticket — both create an onchain record.'},
+            {step:'2',title:'Check in at the event',desc:'BASE bloc staff verify you in person at the door. No app required — just your wallet.'},
+            {step:'3',title:'Your attendance is recorded',desc:'Verified onchain and tied to your wallet. A permanent credential that travels with you.'},
+          ].map(r => (
+            <div key={r.step} style={{display:'flex',alignItems:'flex-start',gap:16,marginBottom:20}}>
+              <div style={{width:32,height:32,background:'#0052FF',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:800,flexShrink:0,color:'#fff',fontFamily:'Syne,sans-serif'}}>{r.step}</div>
+              <div>
+                <div style={{fontSize:15,fontWeight:700,color:'#0A0A0A',marginBottom:2}}>{r.title}</div>
+                <div style={{fontSize:14,color:'#888888',lineHeight:1.6}}>{r.desc}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* ABOUT */}
@@ -133,9 +156,9 @@ export default function MyCityOurMusicPage() {
             Your RSVP creates a verified onchain record that shows you were part of this moment. As BASE bloc grows, that record can help power community recognition, future access, and opportunities for those who show up.
           </p>
           {[
-            {icon:'●',title:'Permanent.',desc:'Attested to Base via EAS — no database, no middleman. Yours forever.'},
-            {icon:'▼',title:'Gasless.',desc:'Coinbase Paymaster covers all fees. Participating costs you nothing.'},
-            {icon:'■',title:'Portable.',desc:'Lives in your wallet. Travels with you to every future BASE bloc event and collaborator.'},
+            {icon:'●',title:'Reserve your place.',desc:'Reserve your place at MY CITY OUR MUSIC — onchain and verified from the moment you commit.'},
+            {icon:'▼',title:'Get event access.',desc:'Get event access with a verified check-in path. Your ticket is the credential.'},
+            {icon:'■',title:'Create a record.',desc:'Create a record that becomes meaningful when you show up. Attendance is attested on Base.'},
           ].map(r => (
             <div key={r.title} style={{display:'flex',alignItems:'flex-start',gap:12,marginTop:16}}>
               <div style={{width:28,height:28,background:'rgba(0,82,255,0.1)',borderRadius:7,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,flexShrink:0,marginTop:2,color:'#0052FF'}}>{r.icon}</div>
