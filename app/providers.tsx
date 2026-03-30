@@ -2,8 +2,7 @@
 import type { ReactNode } from "react";
 import { OnchainKitProvider } from "@coinbase/onchainkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createConfig, http, WagmiProvider, unstable_connector } from "wagmi";
-import { fallback } from "viem";
+import { createConfig, http, WagmiProvider } from "wagmi";
 import { base } from "wagmi/chains";
 import { coinbaseWallet } from "wagmi/connectors";
 
@@ -15,10 +14,7 @@ const connector = coinbaseWallet({
 const wagmiConfig = createConfig({
   chains: [base],
   connectors: [connector],
-  // unstable_connector routes wallet methods (wallet_sendCalls, eth_sendTransaction, etc.)
-  // through the Coinbase Wallet provider; http() handles public RPC reads as fallback.
-  // Fixes viem@2.x "this request method is not supported" on sponsored transactions.
-  transports: { [base.id]: fallback([unstable_connector(connector) as any, http()]) },
+  transports: { [base.id]: http() },
 });
 
 const queryClient = new QueryClient();
