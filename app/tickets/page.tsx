@@ -19,16 +19,14 @@ import {
   TransactionStatusAction,
 } from '@coinbase/onchainkit/transaction';
 import type { LifecycleStatus } from '@coinbase/onchainkit/transaction';
-import { encodeAbiParameters, parseAbiParameters } from 'viem';
+import { ConnectWallet, Wallet, WalletDropdown, WalletDropdownDisconnect } from '@coinbase/onchainkit/wallet';
+import { Avatar, Name } from '@coinbase/onchainkit/identity';
 import type { ContractFunctionParameters } from 'viem';
 import { base } from 'wagmi/chains';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const USDC_CONTRACT   = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const;
-const EAS_CONTRACT    = '0x4200000000000000000000000000000000000021' as const;
-const SCHEMA_UID      = '0xb81941b702c7aacc8164f6fed9a3ff97bbf179131c9e4bedb040bd7d787da4f7' as const;
 const TREASURY_WALLET = '0x2E057B00Cbeccf3FF6b410daa2CC1F99DFF94E2d' as const;
-const ZERO_BYTES32    = '0x0000000000000000000000000000000000000000000000000000000000000000' as const;
 
 // Minimal USDC ERC-20 ABI
 const USDC_ABI = [
@@ -41,37 +39,6 @@ const USDC_ABI = [
       { name: 'value', type: 'uint256' as const },
     ],
     outputs: [{ type: 'bool' as const }],
-  },
-] as const;
-
-// Minimal EAS attest ABI
-const EAS_ABI = [
-  {
-    name: 'attest',
-    type: 'function' as const,
-    stateMutability: 'payable' as const,
-    inputs: [
-      {
-        name: 'request',
-        type: 'tuple' as const,
-        components: [
-          { name: 'schema', type: 'bytes32' as const },
-          {
-            name: 'data',
-            type: 'tuple' as const,
-            components: [
-              { name: 'recipient',       type: 'address' as const },
-              { name: 'expirationTime',  type: 'uint64'  as const },
-              { name: 'revocable',       type: 'bool'    as const },
-              { name: 'refUID',          type: 'bytes32' as const },
-              { name: 'data',            type: 'bytes'   as const },
-              { name: 'value',           type: 'uint256' as const },
-            ],
-          },
-        ],
-      },
-    ],
-    outputs: [{ name: 'uid', type: 'bytes32' as const }],
   },
 ] as const;
 
@@ -101,26 +68,19 @@ const ALL_TIERS = [
     accent:    '#B8860B',
     vipOnly:   true,   // ← only shown to allowlisted wallets
   },
+  {
+    id:        'dev_free' as const,
+    label:     'Dev Test (Free)',
+    basePrice: '0',
+    perks:     ['No payment', 'Tests EAS attestation pipeline', 'Dev only — not shown in production'],
+    accent:    '#6B7280',
+    vipOnly:   false,
+    devOnly:   true,   // ← only shown in development
+  },
 ];
 
-type TierId = 'general' | 'industry' | 'vip';
-type Step   = 'select' | 'confirm' | 'done' | 'error';
-
-// ─── Encode attestation data ──────────────────────────────────────────────────
-function buildAttestData(tier: string, name: string, wallet: `0x${string}`): `0x${string}` {
-  return encodeAbiParameters(
-    parseAbiParameters('string, string, string, string, string, address, string'),
-    [
-      'MY CITY OUR MUSIC',
-      '2026-05-23',
-      'Henry J. Kaiser Center for the Arts, Oakland',
-      tier,
-      name,
-      wallet,
-      'basebloc.app',
-    ]
-  );
-}
+type TierId = 'general' | 'industry' | 'vip' | 'dev_free';
+type Step   = 'select' | 'confirm' | 'attesting' | 'done' | 'error';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 import { Suspense } from 'react';
@@ -128,6 +88,8 @@ import { Suspense } from 'react';
 function TicketsPageInner() {
   const { address } = useAccount();
   const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   // VIP status — granted by allowlist check OR magic link
   const [isVip,         setIsVip]         = useState(false);
@@ -150,6 +112,7 @@ function TicketsPageInner() {
   const [isFree,        setIsFree]        = useState(false);
 
   const [txHash,        setTxHash]        = useState<string | null>(null);
+  const [attestUid,     setAttestUid]     = useState<string | null>(null);
   const [errorMsg,      setErrorMsg]      = useState('');
 
   // ── VIP check on wallet connect ──────────────────────────────────────────
@@ -200,34 +163,19 @@ function TicketsPageInner() {
   }, [searchParams]);
 
   // Tiers visible to this wallet
+  const isDev = process.env.NEXT_PUBLIC_DEV_TICKETS === 'true';
   const visibleTiers = useMemo(
-    () => ALL_TIERS.filter((t) => !t.vipOnly || isVip),
-    [isVip]
+    () => ALL_TIERS.filter((t) => (!t.vipOnly || isVip) && (!(t as any).devOnly || isDev)),
+    [isVip, isDev]
   );
 
   // ── Build batched calls ───────────────────────────────────────────────────
+  // Paid tickets: USDC transfer only — EAS attestation is issued by the
+  // backend after verifying the payment (see handleStatus below).
+  // Free tickets: no payment tx; attestation flows through backend directly.
   const calls = useMemo((): ContractFunctionParameters[] => {
     if (!address || !usdcUnits || step !== 'confirm') return [];
-
-    const attestData = buildAttestData(tierLabel, attendeeName.trim(), address);
-    const attestCall: ContractFunctionParameters = {
-      address:      EAS_CONTRACT,
-      abi:          EAS_ABI,
-      functionName: 'attest',
-      args: [{
-        schema: SCHEMA_UID as `0x${string}`,
-        data: {
-          recipient:      address,
-          expirationTime: BigInt(0),
-          revocable:      false,
-          refUID:         ZERO_BYTES32 as `0x${string}`,
-          data:           attestData,
-          value:          BigInt(0),
-        },
-      }],
-    };
-
-    if (isFree) return [attestCall];
+    if (isFree) return [];
 
     return [
       {
@@ -236,9 +184,8 @@ function TicketsPageInner() {
         functionName: 'transfer',
         args:         [TREASURY_WALLET, BigInt(usdcUnits)],
       },
-      attestCall,
     ];
-  }, [address, usdcUnits, tierLabel, attendeeName, isFree, step]);
+  }, [address, usdcUnits, isFree, step]);
 
   // ── Validate discount + get price ────────────────────────────────────────
   const handleContinue = useCallback(async () => {
@@ -256,7 +203,13 @@ function TicketsPageInner() {
           walletAddress: address,
         }),
       });
-      const data = await res.json();
+      const rawText = await res.text();
+      console.log('[handleContinue /price] status:', res.status, 'body:', rawText.slice(0, 500));
+      let data: any;
+      try { data = JSON.parse(rawText); } catch (parseErr) {
+        console.error('[handleContinue /price] non-JSON response:', rawText.slice(0, 500));
+        throw parseErr;
+      }
       if (!res.ok) {
         if (data.error?.toLowerCase().includes('discount')) { setCodeError(data.error); return; }
         setErrorMsg(data.error ?? 'Server error'); setStep('error'); return;
@@ -267,7 +220,8 @@ function TicketsPageInner() {
       setDiscountLabel(data.discountLabel);
       setIsFree(data.isFree);
       setStep('confirm');
-    } catch {
+    } catch (err) {
+      console.error('[handleContinue /price] fetch error:', err);
       setErrorMsg('Network error. Please try again.'); setStep('error');
     } finally {
       setIsValidating(false);
@@ -279,17 +233,38 @@ function TicketsPageInner() {
     if (status.statusName === 'success') {
       const hash = (status.statusData as any).transactionReceipts?.[0]?.transactionHash ?? null;
       setTxHash(hash);
-      setStep('done');
-      fetch('/api/validate-ticket', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ action: 'record', tier: selectedTier, walletAddress: address, attendeeName: attendeeName.trim(), txHash: hash }),
-      }).catch(console.error);
+      setStep('attesting');
+      try {
+        const res = await fetch('/api/validate-ticket', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            action:        'attest',
+            txHash:        hash,
+            tier:          selectedTier,
+            attendeeName:  attendeeName.trim(),
+            walletAddress: address,
+            isFree,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setErrorMsg(data.error ?? 'Attestation failed after payment. Contact support with your tx hash.');
+          setStep('error');
+          return;
+        }
+        setAttestUid(data.uid ?? null);
+        setStep('done');
+      } catch (err) {
+        console.error('[handleStatus /attest] fetch error:', err);
+        setErrorMsg('Network error while recording your ticket. Contact support with your tx hash.');
+        setStep('error');
+      }
     }
     if (status.statusName === 'error') {
       setErrorMsg('Transaction failed. Your USDC was not charged.'); setStep('error');
     }
-  }, [selectedTier, address, attendeeName]);
+  }, [selectedTier, address, attendeeName, isFree]);
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -301,6 +276,15 @@ function TicketsPageInner() {
             <span style={s.vipBadge}>⭐ VIP</span>
           )}
           <span style={s.badge}>MAY 23 · OAKLAND</span>
+          <Wallet>
+            <ConnectWallet>
+              <Avatar className="h-6 w-6" />
+              <Name />
+            </ConnectWallet>
+            <WalletDropdown>
+              <WalletDropdownDisconnect />
+            </WalletDropdown>
+          </Wallet>
         </div>
       </header>
 
@@ -352,20 +336,70 @@ function TicketsPageInner() {
               {codeError && <p style={s.errTxt}>{codeError}</p>}
             </Field>
 
-            {!address && <p style={s.walletNote}>Connect your wallet above to purchase.</p>}
-
             <button
-              style={{ ...s.cta, opacity: (!address || isValidating) ? 0.5 : 1, cursor: (!address || isValidating) ? 'not-allowed' : 'pointer' }}
-              onClick={handleContinue}
-              disabled={!address || isValidating}
+              style={{ ...s.cta, opacity: (!mounted || !address || isValidating) ? 0.5 : 1, cursor: (!mounted || !address || isValidating) ? 'not-allowed' : 'pointer' }}
+              onClick={() => {
+                if (selectedTier === 'dev_free') {
+                  setTierLabel('Dev Test (Free)');
+                  setUsdcUnits('0');
+                  setIsFree(true);
+                  setStep('confirm');
+                } else {
+                  handleContinue();
+                }
+              }}
+              disabled={!mounted || !address || isValidating}
             >
               {isValidating ? 'Checking…' : 'Continue →'}
             </button>
           </div>
         )}
 
-        {/* CONFIRM */}
-        {step === 'confirm' && calls.length > 0 && (
+        {/* CONFIRM — free ticket (no payment tx) */}
+        {step === 'confirm' && isFree && (
+          <div style={s.card}>
+            <h2 style={s.cardTitle}>Confirm Free Ticket</h2>
+            <div style={s.summary}>
+              <SummaryRow label="Event"   value="MY CITY OUR MUSIC" />
+              <SummaryRow label="Date"    value="May 23, 2026" />
+              <SummaryRow label="Ticket"  value={tierLabel} />
+              {discountLabel && <SummaryRow label="Discount" value={discountLabel} green />}
+              <div style={{ height: 1, background: '#E5E7EB', margin: '8px 0' }} />
+              <SummaryRow label="Total" value="FREE" bold />
+            </div>
+            <p style={s.hint}>Claim your free ticket and create a verified onchain record. No payment needed.</p>
+            <button
+              style={{ ...s.cta, opacity: isValidating ? 0.5 : 1, cursor: isValidating ? 'not-allowed' : 'pointer' }}
+              disabled={isValidating}
+              onClick={async () => {
+                setIsValidating(true);
+                setStep('attesting');
+                try {
+                  const res = await fetch('/api/validate-ticket', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ action: 'attest', tier: selectedTier, attendeeName: attendeeName.trim(), walletAddress: address, isFree: true }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) { setErrorMsg(data.error ?? 'Attestation failed.'); setStep('error'); return; }
+                  setAttestUid(data.uid ?? null);
+                  setStep('done');
+                } catch (err) {
+                  console.error('[free-ticket /attest] fetch error:', err);
+                  setErrorMsg('Network error. Please try again.'); setStep('error');
+                } finally {
+                  setIsValidating(false);
+                }
+              }}
+            >
+              {isValidating ? 'Claiming…' : 'Claim Free Ticket →'}
+            </button>
+            <button style={s.ghost} onClick={() => { setStep('select'); setUsdcUnits(''); }}>← Back</button>
+          </div>
+        )}
+
+        {/* CONFIRM — paid ticket */}
+        {step === 'confirm' && !isFree && calls.length > 0 && (
           <div style={s.card}>
             <h2 style={s.cardTitle}>Confirm Purchase</h2>
             <div style={s.summary}>
@@ -378,14 +412,12 @@ function TicketsPageInner() {
             </div>
 
             <p style={s.hint}>
-              {isFree
-                ? 'One signature claims your free ticket and creates a verified onchain record. Gas is sponsored.'
-                : `One signature sends ${displayPrice} USDC to BASE Bloc and writes your verified ticket to Base. Gas is sponsored — no ETH needed.`}
+              {`One signature sends ${displayPrice} USDC to BASE Bloc. Your onchain ticket record is written automatically after payment confirms. Gas is sponsored — no ETH needed.`}
             </p>
 
             <Transaction chainId={base.id} calls={calls} onStatus={handleStatus} isSponsored>
               <div style={s.txBtnWrap}>
-                <TransactionButton text={isFree ? 'Claim Free Ticket →' : `Pay ${displayPrice} USDC →`} />
+                <TransactionButton text={`Pay ${displayPrice} USDC →`} />
               </div>
               <TransactionSponsor />
               <TransactionStatus>
@@ -398,6 +430,15 @@ function TicketsPageInner() {
           </div>
         )}
 
+        {/* ATTESTING */}
+        {step === 'attesting' && (
+          <div style={{ ...s.card, textAlign: 'center' }}>
+            <div style={{ ...s.check, background: '#EFF6FF', color: '#0052FF' }}>⟳</div>
+            <h2 style={s.cardTitle}>Recording Your Ticket</h2>
+            <p style={s.hint}>Payment confirmed. Writing your verified ticket to Base…</p>
+          </div>
+        )}
+
         {/* DONE */}
         {step === 'done' && (
           <div style={{ ...s.card, textAlign: 'center' }}>
@@ -405,7 +446,10 @@ function TicketsPageInner() {
             <h2 style={s.cardTitle}>You're In!</h2>
             <p style={s.hint}>Your <strong>{tierLabel}</strong> is confirmed. Your participation is now a permanent onchain record on Base.</p>
             {txHash && (
-              <a href={`https://basescan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={s.link}>View on Basescan →</a>
+              <a href={`https://basescan.org/tx/${txHash}`} target="_blank" rel="noopener noreferrer" style={s.link}>View payment on Basescan →</a>
+            )}
+            {attestUid && (
+              <a href={`https://base.easscan.org/attestation/view/${attestUid}`} target="_blank" rel="noopener noreferrer" style={{ ...s.link, display: 'block', marginTop: 6 }}>View attestation on EAS →</a>
             )}
             <a href="/records" style={{ ...s.cta, display: 'inline-block', marginTop: 16, textDecoration: 'none' }}>View My Records</a>
           </div>

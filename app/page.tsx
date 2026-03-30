@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { useAccount, useWalletClient } from "wagmi";
+import { useAccount } from "wagmi";
 import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
 import { Identity, Avatar, Name, Badge } from "@coinbase/onchainkit/identity";
 import { useName } from "@coinbase/onchainkit/identity";
@@ -147,8 +147,7 @@ function useRSVPCount() {
 
 // ─── Main Export ─────────────────────────────────────────────────────────────
 export default function Home() {
-  const { address, isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
+  const { address, isConnected, connector } = useAccount();
   const { data: basename } = useName({ address, chain: base });
 
   const [activePage, setActivePage] = useState<'home' | 'event' | 'records'>('home');
@@ -169,7 +168,7 @@ export default function Home() {
   const finalDisplayName = displayName.trim() || getShortWalletLabel(address);
 
   async function handleRSVP() {
-    if (!walletClient || !address) return;
+    if (!connector || !address) return;
     setRsvpState('loading');
     setErrorMsg('');
     try {
@@ -227,7 +226,11 @@ export default function Home() {
       });
 
       const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
-      const txHash = await (walletClient as any).request({
+      // Get the raw EIP-1193 provider from the connector to call wallet_sendCalls
+      // directly. Using walletClient.request() routes through viem's HTTP transport
+      // which throws "this request method is not supported" in viem@2.47+.
+      const provider = await connector.getProvider();
+      const txHash = await (provider as any).request({
         method: 'wallet_sendCalls',
         params: [{
           version: '1.0',
@@ -270,6 +273,10 @@ export default function Home() {
       setAttestationUID(uid);
       setRsvpState('success');
     } catch (e: any) {
+      console.error('[handleRSVP] error:', e);
+      console.error('[handleRSVP] message:', e?.message);
+      console.error('[handleRSVP] code:', e?.code);
+      console.error('[handleRSVP] stack:', e?.stack);
       setErrorMsg(e?.message || 'Something went wrong. Please try again.');
       setRsvpState('error');
     }
