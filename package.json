@@ -2,12 +2,11 @@
   "name": "oakland-bloc",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
+ "scripts": {
+  "dev": "next dev --webpack",
+  "build": "next build --webpack",
+  "start": "next start"
+},
   "dependencies": {
     "@coinbase/onchainkit": "^1.1.2",
     "@ethereum-attestation-service/eas-sdk": "^2.9.0",
