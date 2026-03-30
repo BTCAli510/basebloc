@@ -249,6 +249,24 @@ async function handleAttest(body: {
   console.log('[validate-ticket attest] signer address:', account.address);
   console.log('[validate-ticket attest] rpc:', rpc);
 
+  // ── Signer gas check ──────────────────────────────────────────────────────
+  try {
+    const signerBalance = await publicClient.getBalance({ address: account.address });
+    console.log('[validate-ticket attest] signer ETH balance (wei):', signerBalance.toString());
+    if (signerBalance === 0n) {
+      return NextResponse.json(
+        {
+          error: 'Attestation signer has no ETH for gas.',
+          debug: `signer ${account.address} has 0 ETH on Base mainnet`,
+        },
+        { status: 500 }
+      );
+    }
+  } catch (err: any) {
+    // Non-fatal: log and continue — writeContract will surface the real error
+    console.warn('[validate-ticket attest] balance check failed:', err?.message);
+  }
+
   const displayName =
     attendeeName?.trim() ||
     walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4);
@@ -277,23 +295,48 @@ async function handleAttest(body: {
     );
   }
 
+  // ── Simulate first to catch revert reasons before spending gas ───────────
+  const attestArgs = [{
+    schema: SCHEMA_UID,
+    data: {
+      recipient:      walletAddress as `0x${string}`,
+      expirationTime: 0n,
+      revocable:      true,
+      refUID:         ZERO_BYTES32,
+      data:           encodedData as `0x${string}`,
+      value:          0n,
+    },
+  }] as const;
+
+  try {
+    await publicClient.simulateContract({
+      address:      EAS_CONTRACT,
+      abi:          EAS_ABI,
+      functionName: 'attest',
+      account:      account.address,
+      args:         attestArgs,
+    });
+    console.log('[validate-ticket attest] simulateContract passed');
+  } catch (simErr: any) {
+    console.error('[validate-ticket attest] simulateContract failed name:', simErr?.name);
+    console.error('[validate-ticket attest] simulateContract failed message:', simErr?.message);
+    console.error('[validate-ticket attest] simulateContract failed cause:', simErr?.cause?.message ?? simErr?.cause);
+    return NextResponse.json(
+      {
+        error: 'Attestation transaction failed.',
+        debug: `simulate: ${simErr?.name}: ${simErr?.message}${simErr?.cause?.message ? ` | cause: ${simErr.cause.message}` : ''}`,
+      },
+      { status: 500 }
+    );
+  }
+
   let attestTxHash: `0x${string}`;
   try {
     attestTxHash = await walletClient.writeContract({
       address:      EAS_CONTRACT,
       abi:          EAS_ABI,
       functionName: 'attest',
-      args: [{
-        schema: SCHEMA_UID,
-        data: {
-          recipient:      walletAddress as `0x${string}`,
-          expirationTime: 0n,
-          revocable:      true,
-          refUID:         ZERO_BYTES32,
-          data:           encodedData as `0x${string}`,
-          value:          0n,
-        },
-      }],
+      args:         attestArgs,
     });
   } catch (err: any) {
     console.error('[validate-ticket attest] writeContract error name:', err?.name);
@@ -303,7 +346,7 @@ async function handleAttest(body: {
     return NextResponse.json(
       {
         error: 'Attestation transaction failed.',
-        debug: `${err?.name}: ${err?.message}${err?.cause?.message ? ` | cause: ${err.cause.message}` : ''}`,
+        debug: `write: ${err?.name}: ${err?.message}${err?.cause?.message ? ` | cause: ${err.cause.message}` : ''}`,
       },
       { status: 500 }
     );
