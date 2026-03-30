@@ -246,6 +246,8 @@ async function handleAttest(body: {
   }
 
   const walletClient = createWalletClient({ account, chain: base, transport: http(rpc) });
+  console.log('[validate-ticket attest] signer address:', account.address);
+  console.log('[validate-ticket attest] rpc:', rpc);
 
   const displayName =
     attendeeName?.trim() ||
@@ -254,9 +256,10 @@ async function handleAttest(body: {
   let encodedData: string;
   try {
     const { SchemaEncoder } = await import('@ethereum-attestation-service/eas-sdk');
-    const encoder = new SchemaEncoder(
-      'string eventName,uint64 eventDate,string coalition,bool attending,string ticketTier,string displayName,bool verified_attendance'
-    );
+    const schemaString = 'string eventName,uint64 eventDate,string coalition,bool attending,string ticketTier,string displayName,bool verified_attendance';
+    console.log('[validate-ticket attest] schema uid:', SCHEMA_UID);
+    console.log('[validate-ticket attest] schema string:', schemaString);
+    const encoder = new SchemaEncoder(schemaString);
     encodedData = encoder.encodeData([
       { name: 'eventName',           value: 'MY CITY OUR MUSIC', type: 'string' },
       { name: 'eventDate',           value: EVENT_TIMESTAMP,     type: 'uint64' },
@@ -293,9 +296,15 @@ async function handleAttest(body: {
       }],
     });
   } catch (err: any) {
-    console.error('[validate-ticket attest] writeContract error:', err?.name, err?.message, err?.stack);
+    console.error('[validate-ticket attest] writeContract error name:', err?.name);
+    console.error('[validate-ticket attest] writeContract error message:', err?.message);
+    console.error('[validate-ticket attest] writeContract error cause:', err?.cause?.message ?? err?.cause);
+    console.error('[validate-ticket attest] writeContract error stack:', err?.stack);
     return NextResponse.json(
-      { error: 'Attestation transaction failed.', debug: String(err) },
+      {
+        error: 'Attestation transaction failed.',
+        debug: `${err?.name}: ${err?.message}${err?.cause?.message ? ` | cause: ${err.cause.message}` : ''}`,
+      },
       { status: 500 }
     );
   }

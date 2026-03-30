@@ -115,29 +115,22 @@ export default function MyCityOurMusicPage() {
       console.log('[handleRSVP] provider constructor:', (provider as any)?.constructor?.name);
       console.log('[handleRSVP] paymasterUrl hostname:', paymasterHostname);
 
-      const baseCallParams = {
-        version: '1.0',
-        chainId: '0x2105',
-        from: address,
-        calls: [{ to: EAS_CONTRACT, data: calldata, value: '0x0' }],
-        ...(BUILDER_CODE_DATA_SUFFIX ? { dataSuffix: BUILDER_CODE_DATA_SUFFIX } : {}),
-      };
-
-      // Try with paymaster sponsorship first. If the paymaster returns 401/400
-      // (misconfigured CDP key), retry without capabilities so the wallet handles
-      // gas itself rather than surfacing a raw provider error to the user.
-      try {
-        await (provider as any).request({
-          method: 'wallet_sendCalls',
-          params: [{ ...baseCallParams, capabilities: paymasterUrl ? { paymasterService: { url: paymasterUrl } } : {} }],
-        });
-      } catch (sponsorErr: any) {
-        console.warn('[handleRSVP] sponsored call failed, retrying without paymaster:', sponsorErr?.message);
-        await (provider as any).request({
-          method: 'wallet_sendCalls',
-          params: [{ ...baseCallParams, capabilities: {} }],
-        });
-      }
+      // Single wallet_sendCalls attempt. If paymaster is configured and returns
+      // 401/400, the outer catch handles it with a generic user message.
+      // We do NOT retry with a different method — a second wallet_sendCalls
+      // without capabilities causes the Coinbase SDK to attempt a fallback path
+      // that hits the viem http() transport and throws "method not supported".
+      await (provider as any).request({
+        method: 'wallet_sendCalls',
+        params: [{
+          version: '1.0',
+          chainId: '0x2105',
+          from: address,
+          calls: [{ to: EAS_CONTRACT, data: calldata, value: '0x0' }],
+          capabilities: paymasterUrl ? { paymasterService: { url: paymasterUrl } } : {},
+          ...(BUILDER_CODE_DATA_SUFFIX ? { dataSuffix: BUILDER_CODE_DATA_SUFFIX } : {}),
+        }],
+      });
 
       let uid: string | null = null;
       for (let i = 0; i < 20; i++) {

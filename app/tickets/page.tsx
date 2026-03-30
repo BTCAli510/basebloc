@@ -249,7 +249,9 @@ function TicketsPageInner() {
         });
         const data = await res.json();
         if (!res.ok) {
-          setErrorMsg(data.error ?? 'Attestation failed after payment. Contact support with your tx hash.');
+          console.error('[handleStatus /attest] server error:', data.error);
+          console.error('[handleStatus /attest] server debug:', data.debug);
+          setErrorMsg('Something went wrong recording your ticket. Contact support with your tx hash.');
           setStep('error');
           return;
         }
