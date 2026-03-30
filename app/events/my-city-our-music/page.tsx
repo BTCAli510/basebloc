@@ -9,7 +9,7 @@ import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import { base } from "viem/chains";
 
 const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
-const SCHEMA_UID = "0xe75ec39ab8bfdd680f02b11817ed9e10556850278264c0917d645c73866784d9";
+const SCHEMA_UID = "0xb81941b702c7aacc8164f6fed9a3ff97bbf179131c9e4bedb040bd7d787da4f7";
 const BUILDER_CODE_DATA_SUFFIX = "0x62635f37736474747335310b0080218021802180218021802180218021";
 
 export default function MyCityOurMusicPage() {
