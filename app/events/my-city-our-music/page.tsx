@@ -108,19 +108,36 @@ export default function MyCityOurMusicPage() {
       });
 
       const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
+      const paymasterHostname = paymasterUrl
+        ? (() => { try { return new URL(paymasterUrl).hostname; } catch { return 'invalid-url'; } })()
+        : 'not-set';
       const provider = await connector.getProvider();
-      console.log('[handleRSVP] provider type:', Object.prototype.toString.call(provider), 'constructor:', (provider as any)?.constructor?.name);
-      await (provider as any).request({
-        method: 'wallet_sendCalls',
-        params: [{
-          version: '1.0',
-          chainId: '0x2105',
-          from: address,
-          calls: [{ to: EAS_CONTRACT, data: calldata, value: '0x0' }],
-          capabilities: paymasterUrl ? { paymasterService: { url: paymasterUrl } } : {},
-          ...(BUILDER_CODE_DATA_SUFFIX ? { dataSuffix: BUILDER_CODE_DATA_SUFFIX } : {}),
-        }]
-      });
+      console.log('[handleRSVP] provider constructor:', (provider as any)?.constructor?.name);
+      console.log('[handleRSVP] paymasterUrl hostname:', paymasterHostname);
+
+      const baseCallParams = {
+        version: '1.0',
+        chainId: '0x2105',
+        from: address,
+        calls: [{ to: EAS_CONTRACT, data: calldata, value: '0x0' }],
+        ...(BUILDER_CODE_DATA_SUFFIX ? { dataSuffix: BUILDER_CODE_DATA_SUFFIX } : {}),
+      };
+
+      // Try with paymaster sponsorship first. If the paymaster returns 401/400
+      // (misconfigured CDP key), retry without capabilities so the wallet handles
+      // gas itself rather than surfacing a raw provider error to the user.
+      try {
+        await (provider as any).request({
+          method: 'wallet_sendCalls',
+          params: [{ ...baseCallParams, capabilities: paymasterUrl ? { paymasterService: { url: paymasterUrl } } : {} }],
+        });
+      } catch (sponsorErr: any) {
+        console.warn('[handleRSVP] sponsored call failed, retrying without paymaster:', sponsorErr?.message);
+        await (provider as any).request({
+          method: 'wallet_sendCalls',
+          params: [{ ...baseCallParams, capabilities: {} }],
+        });
+      }
 
       let uid: string | null = null;
       for (let i = 0; i < 20; i++) {
@@ -150,7 +167,8 @@ export default function MyCityOurMusicPage() {
       console.error('[handleRSVP] message:', e?.message);
       console.error('[handleRSVP] code:', e?.code);
       console.error('[handleRSVP] stack:', e?.stack);
-      setErrorMsg(e?.message || 'Something went wrong. Please try again.');
+      // Never surface raw provider/SDK error messages to the user
+      setErrorMsg('Something went wrong. Please try again.');
       setRsvpState('error');
     }
   }
@@ -278,7 +296,7 @@ export default function MyCityOurMusicPage() {
               {rsvpState === 'loading' ? 'Attesting to Base...' : 'RSVP on Base — Free'}
             </button>
             {rsvpState === 'error' && (
-              <p style={{color:'red',fontSize:13,marginTop:10}}>{errorMsg}</p>
+              <p style={{color:'#CC0000',fontSize:13,marginTop:10}}>Something went wrong. Please try again.</p>
             )}
           </div>
         )}
