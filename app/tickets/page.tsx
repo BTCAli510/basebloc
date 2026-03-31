@@ -173,13 +173,7 @@ function TicketsPageInner() {
     if (step !== 'confirm' || isFree || !address || !displayPrice) return;
     const projectId = process.env.NEXT_PUBLIC_CDP_PROJECT_ID;
     if (!projectId) return;
-    const url = getOnrampBuyUrl({
-      projectId,
-      addresses: { [address]: ['base'] },
-      assets: ['USDC'],
-      presetFiatAmount: Number(displayPrice),
-      fiatCurrency: 'USD',
-    });
+    const url = `https://pay.coinbase.com/buy/select-asset?appId=${projectId}&destinationWallets=${encodeURIComponent(JSON.stringify([{ address, blockchains: ['base'], assets: ['USDC'] }]))}&presetFiatAmount=${displayPrice}&fiatCurrency=USD`;
     setFundingUrl(url);
   }, [step, isFree, address, displayPrice]);
 
