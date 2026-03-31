@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const privateKey = rawKey.replace(/\\n/g, '\n');
     const pk = await importPKCS8(privateKey, 'Ed25519');
     const jwt = await new SignJWT({})
-      .setProtectedHeader({ alg: 'EdDSA', kid: keyName })
+      .setProtectedHeader({ alg: 'EdDSA', kid: keyName, nonce: crypto.randomUUID() })
       .setIssuedAt()
       .setExpirationTime('2m')
       .sign(pk);
