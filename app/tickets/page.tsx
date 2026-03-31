@@ -443,7 +443,7 @@ function TicketsPageInner() {
             </div>
 
             <p style={s.hint}>
-              {`One signature sends ${displayPrice} USDC to BASE Bloc. Your onchain ticket record is written automatically after payment confirms. Gas is sponsored — no ETH needed.`}
+              {`One signature sends ${displayPrice} USDC to BASE Bloc. Your onchain ticket record is written automatically after payment confirms. No crypto fees or ETH required — we cover all transaction costs.`}
             </p>
 
             {insufficientUsdc && (
@@ -513,9 +513,6 @@ function TicketsPageInner() {
           </div>
         )}
 
-        <p style={s.footer}>
-          Payments go directly to the BASE Bloc treasury on Base. Every ticket is a verified onchain credential — no middlemen.
-        </p>
       </main>
     </div>
   );
