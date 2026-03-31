@@ -34,56 +34,50 @@ function inspectSecret(raw: string, source: SecretShape["source"]): SecretShape 
   };
 }
 
-function prepareSecret(raw: string, shape: SecretShape): string {
-  const normalized = normalizeLineEndings(raw);
+function prepareSecret(raw: string): string {
+  const trimmed = raw.trim();
 
-  if (!normalized) return "";
+  // Ed25519 base64 secret — pass through as-is
+  if (!trimmed.includes("BEGIN")) {
+    return trimmed;
+  }
 
-  // Raw base64 secret (Ed25519) — pass through untouched
-  if (shape.looksEd25519) {
+  // Normalize line endings for PEM formats
+  const normalized = trimmed
+    .replace(/\\n/g, "\n")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .trim() + "\n";
+
+  // Already PKCS8 — SDK accepts directly
+  if (normalized.includes("BEGIN PRIVATE KEY")) {
     return normalized;
   }
 
-  // PKCS8 PEM — SDK should accept directly
-  if (shape.looksPKCS8) {
-    return normalized + "\n";
+  // SEC1 — convert to PKCS8
+  if (normalized.includes("BEGIN EC PRIVATE KEY")) {
+    try {
+      const keyObj = crypto.createPrivateKey({ key: normalized, format: "pem" });
+      return keyObj.export({ type: "pkcs8", format: "pem" }) as string;
+    } catch {
+      // conversion failed, return normalized and let SDK error
+      return normalized;
+    }
   }
 
-  // SEC1 PEM — convert to PKCS8 before handing to SDK
-  if (shape.looksSEC1) {
-    const keyObj = crypto.createPrivateKey({
-      key: normalized + "\n",
-      format: "pem",
-    });
-
-    return keyObj.export({
-      type: "pkcs8",
-      format: "pem",
-    }) as string;
-  }
-
-  throw new Error("Unsupported CDP key format");
+  return normalized;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const apiKeyId = process.env.CDP_API_KEY_ID ?? "";
 
-    const secretFromPreferred = process.env.CDP_API_KEY_SECRET ?? "";
-    const secretFromLegacy = process.env.CDP_API_KEY_PRIVATE_KEY ?? "";
-
-    const rawSecret = secretFromPreferred || secretFromLegacy;
-    const secretSource: SecretShape["source"] = secretFromPreferred
-      ? "CDP_API_KEY_SECRET"
-      : secretFromLegacy
-        ? "CDP_API_KEY_PRIVATE_KEY"
-        : "missing";
+    const rawSecret = process.env.CDP_API_KEY_PRIVATE_KEY ?? "";
 
     if (!apiKeyId || !rawSecret) {
       console.error("[onramp-session] Missing CDP credentials", {
         hasApiKeyId: !!apiKeyId,
         hasSecret: !!rawSecret,
-        secretSource,
       });
 
       return NextResponse.json(
@@ -91,7 +85,6 @@ export async function POST(req: NextRequest) {
           error: "Onramp not configured",
           hasApiKeyId: !!apiKeyId,
           hasSecret: !!rawSecret,
-          secretSource,
         },
         { status: 500 }
       );
@@ -117,13 +110,13 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       "192.0.2.1";
 
-    const shape = inspectSecret(rawSecret, secretSource);
+    const shape = inspectSecret(rawSecret, "CDP_API_KEY_PRIVATE_KEY");
 
     console.log("[onramp-session] Secret shape:", shape);
 
     let apiKeySecret: string;
     try {
-      apiKeySecret = prepareSecret(rawSecret, shape);
+      apiKeySecret = prepareSecret(rawSecret);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("[onramp-session] Secret conversion failed:", msg);
