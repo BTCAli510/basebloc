@@ -1,14 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+function getSupabaseAdmin() {
+  const url = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceRoleKey) {
+    throw new Error("MISSING SUPABASE_URL OR SUPABASE_SERVICE_ROLE_KEY");
+  }
+
+  return createClient(url, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 function isValidWallet(address: string) {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
@@ -21,6 +31,18 @@ function toUsdcUnits(amount: number | string) {
 }
 
 export async function GET(request: NextRequest) {
+  let supabase;
+  try {
+    supabase = getSupabaseAdmin();
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[orders] config error:", msg);
+    return NextResponse.json(
+      { error: "Server misconfigured", detail: msg },
+      { status: 500 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get("eventId");
@@ -63,6 +85,18 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  let supabase;
+  try {
+    supabase = getSupabaseAdmin();
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[orders] config error:", msg);
+    return NextResponse.json(
+      { error: "Server misconfigured", detail: msg },
+      { status: 500 }
+    );
+  }
+
   try {
     const body = await request.json();
     const eventId = body?.eventId;
