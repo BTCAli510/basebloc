@@ -1,44 +1,100 @@
-// app/api/onramp-session/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { generateJwt } from "@coinbase/cdp-sdk/auth";
 import crypto from "crypto";
 
-function prepareSecret(raw: string): string {
-  const trimmed = raw.trim();
+type SecretShape = {
+  source: "CDP_API_KEY_SECRET" | "CDP_API_KEY_PRIVATE_KEY" | "missing";
+  hasBegin: boolean;
+  looksSEC1: boolean;
+  looksPKCS8: boolean;
+  looksEd25519: boolean;
+  normalizedLength: number;
+};
 
-  if (!trimmed.includes("BEGIN")) {
-    return trimmed;
-  }
-
-  const normalized = trimmed
+function normalizeLineEndings(value: string): string {
+  return value
     .replace(/\\n/g, "\n")
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
-    .trim() + "\n";
+    .trim();
+}
 
-  if (normalized.includes("BEGIN PRIVATE KEY")) {
+function inspectSecret(raw: string, source: SecretShape["source"]): SecretShape {
+  const normalized = normalizeLineEndings(raw);
+
+  return {
+    source,
+    hasBegin: normalized.includes("BEGIN"),
+    looksSEC1: normalized.includes("BEGIN EC PRIVATE KEY"),
+    looksPKCS8:
+      normalized.includes("BEGIN PRIVATE KEY") &&
+      !normalized.includes("BEGIN EC PRIVATE KEY"),
+    looksEd25519: !normalized.includes("BEGIN"),
+    normalizedLength: normalized.length,
+  };
+}
+
+function prepareSecret(raw: string, shape: SecretShape): string {
+  const normalized = normalizeLineEndings(raw);
+
+  if (!normalized) return "";
+
+  // Raw base64 secret (Ed25519) — pass through untouched
+  if (shape.looksEd25519) {
     return normalized;
   }
 
-  if (normalized.includes("BEGIN EC PRIVATE KEY")) {
-    const keyObj = crypto.createPrivateKey({ key: normalized, format: "pem" });
-    return keyObj.export({ type: "pkcs8", format: "pem" }) as string;
+  // PKCS8 PEM — SDK should accept directly
+  if (shape.looksPKCS8) {
+    return normalized + "\n";
   }
 
-  return normalized;
+  // SEC1 PEM — convert to PKCS8 before handing to SDK
+  if (shape.looksSEC1) {
+    const keyObj = crypto.createPrivateKey({
+      key: normalized + "\n",
+      format: "pem",
+    });
+
+    return keyObj.export({
+      type: "pkcs8",
+      format: "pem",
+    }) as string;
+  }
+
+  throw new Error("Unsupported CDP key format");
 }
 
 export async function POST(req: NextRequest) {
   try {
     const apiKeyId = process.env.CDP_API_KEY_ID ?? "";
-    const rawSecret =
-      process.env.CDP_API_KEY_SECRET ??
-      process.env.CDP_API_KEY_PRIVATE_KEY ??
-      "";
+
+    const secretFromPreferred = process.env.CDP_API_KEY_SECRET ?? "";
+    const secretFromLegacy = process.env.CDP_API_KEY_PRIVATE_KEY ?? "";
+
+    const rawSecret = secretFromPreferred || secretFromLegacy;
+    const secretSource: SecretShape["source"] = secretFromPreferred
+      ? "CDP_API_KEY_SECRET"
+      : secretFromLegacy
+        ? "CDP_API_KEY_PRIVATE_KEY"
+        : "missing";
 
     if (!apiKeyId || !rawSecret) {
-      console.error("[onramp-session] Missing CDP credentials");
-      return NextResponse.json({ error: "Onramp not configured" }, { status: 500 });
+      console.error("[onramp-session] Missing CDP credentials", {
+        hasApiKeyId: !!apiKeyId,
+        hasSecret: !!rawSecret,
+        secretSource,
+      });
+
+      return NextResponse.json(
+        {
+          error: "Onramp not configured",
+          hasApiKeyId: !!apiKeyId,
+          hasSecret: !!rawSecret,
+          secretSource,
+        },
+        { status: 500 }
+      );
     }
 
     let walletAddress: string | undefined;
@@ -50,7 +106,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (!walletAddress || !walletAddress.startsWith("0x")) {
-      return NextResponse.json({ error: "walletAddress is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "walletAddress is required" },
+        { status: 400 }
+      );
     }
 
     const clientIp =
@@ -58,14 +117,26 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       "192.0.2.1";
 
-    const apiKeySecret = prepareSecret(rawSecret);
+    const shape = inspectSecret(rawSecret, secretSource);
 
-    console.log("[onramp-session] Secret shape:", {
-      looksSEC1: rawSecret.includes("BEGIN EC PRIVATE KEY"),
-      looksPKCS8: apiKeySecret.includes("BEGIN PRIVATE KEY"),
-      looksEd25519: !rawSecret.includes("BEGIN"),
-      finalLength: apiKeySecret.length,
-    });
+    console.log("[onramp-session] Secret shape:", shape);
+
+    let apiKeySecret: string;
+    try {
+      apiKeySecret = prepareSecret(rawSecret, shape);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[onramp-session] Secret conversion failed:", msg);
+
+      return NextResponse.json(
+        {
+          error: "Secret conversion failed",
+          detail: msg,
+          shape,
+        },
+        { status: 500 }
+      );
+    }
 
     let jwt: string;
     try {
@@ -80,7 +151,15 @@ export async function POST(req: NextRequest) {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("[onramp-session] JWT generation failed:", msg);
-      return NextResponse.json({ error: "JWT signing failed", detail: msg }, { status: 500 });
+
+      return NextResponse.json(
+        {
+          error: "JWT signing failed",
+          detail: msg,
+          shape,
+        },
+        { status: 500 }
+      );
     }
 
     const cdpRes = await fetch("https://api.developer.coinbase.com/onramp/v1/token", {
@@ -98,25 +177,45 @@ export async function POST(req: NextRequest) {
     if (!cdpRes.ok) {
       const errText = await cdpRes.text();
       console.error("[onramp-session] CDP API error:", cdpRes.status, errText);
+
       return NextResponse.json(
-        { error: "CDP session token request failed", detail: errText },
+        {
+          error: "CDP session token request failed",
+          detail: errText,
+          shape,
+        },
         { status: 502 }
       );
     }
 
-    const { token } = (await cdpRes.json()) as { token: string };
+    const { token } = (await cdpRes.json()) as { token?: string };
 
     if (!token) {
       console.error("[onramp-session] CDP returned empty token");
-      return NextResponse.json({ error: "CDP returned empty session token" }, { status: 502 });
+
+      return NextResponse.json(
+        {
+          error: "CDP returned empty session token",
+          shape,
+        },
+        { status: 502 }
+      );
     }
 
     console.log("[onramp-session] Session token generated successfully for", walletAddress);
-    return NextResponse.json({ token });
 
+    // Return both keys for client compatibility
+    return NextResponse.json({
+      token,
+      sessionToken: token,
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[onramp-session] Unhandled error:", msg);
-    return NextResponse.json({ error: "Internal server error", detail: msg }, { status: 500 });
+
+    return NextResponse.json(
+      { error: "Internal server error", detail: msg },
+      { status: 500 }
+    );
   }
 }
