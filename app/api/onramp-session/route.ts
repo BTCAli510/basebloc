@@ -11,10 +11,20 @@ export async function POST(request: Request) {
     const projectId = process.env.NEXT_PUBLIC_CDP_PROJECT_ID!;
 
     // Import as JWK for Ed25519
+    const base64Key = rawPrivateKey
+      .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+      .replace(/-----END PRIVATE KEY-----/g, '')
+      .replace(/\\n/g, '')
+      .replace(/\s/g, '')
+      // Convert standard base64 to base64url
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
+
     const pk = await importJWK({
       kty: 'OKP',
       crv: 'Ed25519',
-      d: rawPrivateKey.replace(/\\n/g, '').replace(/\s/g, ''),
+      d: base64Key,
     }, 'EdDSA');
 
     const jwt = await new SignJWT({})
