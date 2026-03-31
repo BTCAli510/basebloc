@@ -168,13 +168,27 @@ function TicketsPageInner() {
   const { data: usdcBalance } = useBalance({ address, token: USDC_CONTRACT });
   const insufficientUsdc = !isFree && !!usdcUnits && !!usdcBalance && usdcBalance.value < BigInt(usdcUnits);
 
-  // ── Build onramp URL when entering paid confirm step ─────────────────────
+  // ── Fetch onramp session token when entering paid confirm step ────────────
   useEffect(() => {
     if (step !== 'confirm' || isFree || !address || !displayPrice) return;
-    const projectId = process.env.NEXT_PUBLIC_CDP_PROJECT_ID;
-    if (!projectId) return;
-    const url = `https://pay.coinbase.com/buy/select-asset?appId=${projectId}&destinationWallets=${encodeURIComponent(JSON.stringify([{ address, blockchains: ['base'], assets: ['USDC'] }]))}&presetFiatAmount=${displayPrice}&fiatCurrency=USD`;
-    setFundingUrl(url);
+    setFundingUrl(undefined);
+    fetch('/api/onramp-session', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ address, amount: Number(displayPrice) }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.sessionToken) {
+          setFundingUrl(getOnrampBuyUrl({
+            sessionToken:     data.sessionToken,
+            defaultAsset:     'USDC',
+            defaultNetwork:   'base',
+            presetFiatAmount: Number(displayPrice),
+          }));
+        }
+      })
+      .catch(() => {});
   }, [step, isFree, address, displayPrice]);
 
   // Tiers visible to this wallet
