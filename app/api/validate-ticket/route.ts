@@ -28,6 +28,7 @@ const TIER_PRICES = {
   general:  { label: 'General Admission', units: 25_000_000n, display: '25'  },
   industry: { label: 'Industry Pass',     units: 50_000_000n, display: '50'  },
   vip:      { label: 'VIP Access',        units: 75_000_000n, display: '75'  },
+  rsvp:     { label: 'RSVP',             units: 0n,          display: '0'   },
   // dev-only: free tier for testing the EAS pipeline without spending USDC
   dev_free: { label: 'Dev Test (Free)',   units: 0n,          display: '0'   },
 } as const;

@@ -52,7 +52,7 @@ export default function MyCityOurMusicPage() {
       const res = await fetch('/api/validate-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'attest', tier: 'RSVP', attendeeName: finalDisplayName, walletAddress: address, isFree: true }),
+        body: JSON.stringify({ action: 'attest', tier: 'rsvp', attendeeName: finalDisplayName, walletAddress: address, isFree: true }),
       });
       const data = await res.json();
       if (!res.ok) { setErrorMsg(data.error ?? 'Attestation failed.'); setRsvpState('error'); return; }
