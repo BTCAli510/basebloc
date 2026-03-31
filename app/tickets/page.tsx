@@ -443,33 +443,55 @@ function TicketsPageInner() {
             </div>
 
             <p style={s.hint}>
-              {`One signature sends ${displayPrice} USDC to BASE Bloc. Your onchain ticket record is written automatically after payment confirms. No crypto fees or ETH required — we cover all transaction costs.`}
+              {`Your ticket is created automatically after payment confirms. No extra network fees or ETH required.`}
             </p>
 
             {/* Funding card — shows when wallet needs USDC */}
             {insufficientUsdc && (
-              <div style={{
-                background: '#F0F4FF',
-                border: '1px solid #C7D7FF',
-                borderRadius: 14,
-                padding: '18px 20px',
-                marginBottom: 16,
-              }}>
-                <p style={{
-                  fontFamily: "'Inter Tight', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  color: '#0052FF',
-                  margin: '0 0 4px 0',
-                }}>
+              <div
+                style={{
+                  background: "#F6F9FF",
+                  border: "1px solid #D9E4FF",
+                  borderRadius: 16,
+                  padding: "20px",
+                  marginBottom: 16,
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "#0052FF",
+                    margin: "0 0 8px 0",
+                  }}
+                >
+                  Fund wallet
+                </p>
+
+                <p
+                  style={{
+                    fontFamily: "'Inter Tight', sans-serif",
+                    fontWeight: 700,
+                    fontSize: 18,
+                    lineHeight: 1.15,
+                    color: "#111827",
+                    margin: "0 0 8px 0",
+                  }}
+                >
                   Add funds to complete purchase
                 </p>
-                <p style={{
-                  fontSize: 13,
-                  color: '#374151',
-                  margin: '0 0 14px 0',
-                  lineHeight: 1.5,
-                }}>
+
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "#4B5563",
+                    margin: "0 0 16px 0",
+                    lineHeight: 1.55,
+                  }}
+                >
                   Buy USDC with card, Apple Pay, or Coinbase — then return here to finish checkout.
                 </p>
 
@@ -479,53 +501,67 @@ function TicketsPageInner() {
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '13px 0',
-                      background: '#0052FF',
-                      color: '#fff',
-                      borderRadius: 10,
-                      textAlign: 'center',
+                      display: "block",
+                      width: "100%",
+                      padding: "14px 0",
+                      background: "#0052FF",
+                      color: "#FFFFFF",
+                      borderRadius: 12,
+                      textAlign: "center",
                       fontFamily: "'Inter Tight', sans-serif",
                       fontWeight: 700,
                       fontSize: 15,
-                      textDecoration: 'none',
-                      letterSpacing: '-0.01em',
-                      boxSizing: 'border-box',
+                      textDecoration: "none",
+                      letterSpacing: "-0.01em",
+                      boxSizing: "border-box",
+                      boxShadow: "0 6px 18px rgba(0,82,255,0.18)",
                     }}
                   >
                     Add USDC with Coinbase →
                   </a>
                 ) : (
-                  <div style={{
-                    padding: '13px 0',
-                    background: '#E5EDFF',
-                    borderRadius: 10,
-                    textAlign: 'center',
-                    fontSize: 14,
-                    color: '#6b7280',
-                    fontFamily: "'Inter Tight', sans-serif",
-                  }}>
+                  <div
+                    style={{
+                      width: "100%",
+                      padding: "14px 0",
+                      background: "#E8EEFF",
+                      borderRadius: 12,
+                      textAlign: "center",
+                      fontSize: 14,
+                      color: "#6B7280",
+                      fontWeight: 600,
+                      boxSizing: "border-box",
+                    }}
+                  >
                     Loading funding options...
                   </div>
                 )}
 
-                <p style={{
-                  fontSize: 11,
-                  color: '#9CA3AF',
-                  textAlign: 'center',
-                  margin: '10px 0 0 0',
-                }}>
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: "#9CA3AF",
+                    textAlign: "center",
+                    margin: "12px 0 0 0",
+                    lineHeight: 1.45,
+                  }}
+                >
                   Funds go directly to your wallet. Return here to complete checkout.
                 </p>
               </div>
             )}
 
-            {/* Pay button — disabled when insufficient USDC */}
-            <div style={{ opacity: insufficientUsdc ? 0.4 : 1, pointerEvents: insufficientUsdc ? 'none' : 'auto' }}>
+            {/* Pay button — visually disabled when insufficient USDC */}
+            <div
+              style={{
+                opacity: insufficientUsdc ? 0.45 : 1,
+                pointerEvents: insufficientUsdc ? "none" : "auto",
+                transition: "opacity 0.2s ease",
+              }}
+            >
               <Transaction chainId={base.id} calls={calls} onStatus={handleStatus} isSponsored>
                 <div style={s.txBtnWrap}>
-                  <TransactionButton text={insufficientUsdc ? 'Fund wallet first' : `Pay ${displayPrice} USDC`} />
+                  <TransactionButton text={insufficientUsdc ? 'Fund wallet first' : `Pay ${displayPrice} USDC →`} />
                 </div>
                 <TransactionSponsor />
                 <TransactionStatus>
