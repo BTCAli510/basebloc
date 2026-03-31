@@ -5,15 +5,10 @@ import Link from "next/link";
 import { useAccount } from "wagmi";
 import { ConnectWallet } from "@coinbase/onchainkit/wallet";
 import { useName } from "@coinbase/onchainkit/identity";
-import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import { base } from "viem/chains";
 
-const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
-const SCHEMA_UID = "0xb81941b702c7aacc8164f6fed9a3ff97bbf179131c9e4bedb040bd7d787da4f7";
-const BUILDER_CODE_DATA_SUFFIX = "0x62635f37736474747335310b0080218021802180218021802180218021";
-
 export default function MyCityOurMusicPage() {
-  const { address, isConnected, connector } = useAccount();
+  const { address, isConnected } = useAccount();
   const { data: basename } = useName({ address, chain: base });
   const [countdown, setCountdown] = useState({ days: '00', hrs: '00', min: '00', sec: '00' });
   const [rsvpState, setRsvpState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -50,107 +45,21 @@ export default function MyCityOurMusicPage() {
   const finalDisplayName = displayName.trim() || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Guest');
 
   async function handleRSVP() {
-    if (!connector || !address) return;
+    if (!address) return;
     setRsvpState('loading');
     setErrorMsg('');
     try {
-      const schemaEncoder = new SchemaEncoder(
-        'string eventName,string eventDate,string coalition,bool attending,string ticketTier,string displayName'
-      );
-      const encoded = schemaEncoder.encodeData([
-        { name: 'eventName', value: 'MY CITY OUR MUSIC', type: 'string' },
-        { name: 'eventDate', value: '2026-05-23', type: 'string' },
-        { name: 'coalition', value: 'BASE Oakland bloc', type: 'string' },
-        { name: 'attending', value: true, type: 'bool' },
-        { name: 'ticketTier', value: 'General', type: 'string' },
-        { name: 'displayName', value: finalDisplayName, type: 'string' },
-      ]);
-
-      const { encodeFunctionData } = await import('viem');
-      const EAS_ABI = [{
-        name: 'attest',
-        type: 'function',
-        inputs: [{
-          name: 'request', type: 'tuple',
-          components: [
-            { name: 'schema', type: 'bytes32' },
-            {
-              name: 'data', type: 'tuple',
-              components: [
-                { name: 'recipient', type: 'address' },
-                { name: 'expirationTime', type: 'uint64' },
-                { name: 'revocable', type: 'bool' },
-                { name: 'refUID', type: 'bytes32' },
-                { name: 'data', type: 'bytes' },
-                { name: 'value', type: 'uint256' },
-              ]
-            }
-          ]
-        }],
-        outputs: [{ name: '', type: 'bytes32' }],
-        stateMutability: 'payable',
-      }] as const;
-
-      const calldata = encodeFunctionData({
-        abi: EAS_ABI,
-        functionName: 'attest',
-        args: [{
-          schema: SCHEMA_UID as `0x${string}`,
-          data: {
-            recipient: address,
-            expirationTime: BigInt(0),
-            revocable: true,
-            refUID: '0x0000000000000000000000000000000000000000000000000000000000000000',
-            data: encoded as `0x${string}`,
-            value: BigInt(0),
-          }
-        }]
+      const res = await fetch('/api/validate-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'attest', tier: 'RSVP', attendeeName: finalDisplayName, walletAddress: address, isFree: true }),
       });
-
-      const provider = await connector.getProvider();
-      console.log('[handleRSVP] provider constructor:', (provider as any)?.constructor?.name);
-
-      await (provider as any).request({
-        method: 'wallet_sendCalls',
-        params: [{
-          version: '1.0',
-          chainId: '0x2105',
-          from: address,
-          calls: [{ to: EAS_CONTRACT, data: calldata, value: '0x0' }],
-          capabilities: {},
-          ...(BUILDER_CODE_DATA_SUFFIX ? { dataSuffix: BUILDER_CODE_DATA_SUFFIX } : {}),
-        }],
-      });
-
-      let uid: string | null = null;
-      for (let i = 0; i < 20; i++) {
-        await new Promise(r => setTimeout(r, 3000));
-        const res = await fetch('https://base.easscan.org/graphql', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: `query {
-              attestations(
-                where: { attester: { equals: "${address}" }, schemaId: { equals: "${SCHEMA_UID}" } }
-                orderBy: { timeCreated: desc }
-                take: 1
-              ) { id }
-            }`
-          })
-        });
-        const json = await res.json();
-        uid = json?.data?.attestations?.[0]?.id ?? null;
-        if (uid) break;
-      }
-
-      setAttestationUID(uid);
+      const data = await res.json();
+      if (!res.ok) { setErrorMsg(data.error ?? 'Attestation failed.'); setRsvpState('error'); return; }
+      setAttestationUID(data.uid ?? null);
       setRsvpState('success');
     } catch (e: any) {
       console.error('[handleRSVP] error:', e);
-      console.error('[handleRSVP] message:', e?.message);
-      console.error('[handleRSVP] code:', e?.code);
-      console.error('[handleRSVP] stack:', e?.stack);
-      // Never surface raw provider/SDK error messages to the user
       setErrorMsg('Something went wrong. Please try again.');
       setRsvpState('error');
     }
