@@ -175,13 +175,13 @@ function TicketsPageInner() {
     fetch('/api/onramp-session', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ address, amount: Number(displayPrice) }),
+      body:    JSON.stringify({ walletAddress: address, amount: Number(displayPrice) }),
     })
       .then(r => r.json())
       .then(data => {
-        if (data.sessionToken) {
+        if (data.token) {
           setFundingUrl(getOnrampBuyUrl({
-            sessionToken:     data.sessionToken,
+            sessionToken:     data.token,
             defaultAsset:     'USDC',
             defaultNetwork:   'base',
             presetFiatAmount: Number(displayPrice),

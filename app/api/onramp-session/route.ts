@@ -1,71 +1,116 @@
-import { NextResponse } from 'next/server';
+// app/api/onramp-session/route.ts
+//
+// Generates a Coinbase Onramp session token using the CDP SDK.
+// The SDK handles ES256 JWT signing automatically — no manual
+// PEM parsing or Web Crypto API required.
+//
+// Required Vercel env vars:
+//   CDP_API_KEY_ID          — your CDP key UUID (e.g. "2dddd7bd-...")
+//   CDP_API_KEY_PRIVATE_KEY — PEM-format EC private key (with real newlines)
 
-export async function POST(request: Request) {
+import { NextRequest, NextResponse } from 'next/server';
+import { generateJwt } from '@coinbase/cdp-sdk/auth';
+
+const CDP_API_KEY_ID      = process.env.CDP_API_KEY_ID ?? '';
+const CDP_API_KEY_PRIVATE = process.env.CDP_API_KEY_PRIVATE_KEY ?? '';
+
+export async function POST(req: NextRequest) {
   try {
-    const { address, amount } = await request.json();
-    if (!address) return NextResponse.json({ error: 'address required' }, { status: 400 });
+    // ── Validate env vars ────────────────────────────────────────────
+    if (!CDP_API_KEY_ID || !CDP_API_KEY_PRIVATE) {
+      console.error('[onramp-session] Missing CDP env vars');
+      return NextResponse.json(
+        { error: 'Onramp not configured — missing CDP credentials' },
+        { status: 500 }
+      );
+    }
 
-    const keyId = process.env.CDP_API_KEY_NAME!;
-    const privateKeyPem = process.env.CDP_API_KEY_PRIVATE_KEY!;
-    const projectId = process.env.NEXT_PUBLIC_CDP_PROJECT_ID!;
+    // ── Parse request body ───────────────────────────────────────────
+    let walletAddress: string | undefined;
+    try {
+      const body = await req.json();
+      walletAddress = body.walletAddress ?? body.address;
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
 
-    // Build JWT header and payload
-    const header = { alg: 'ES256', kid: keyId, typ: 'JWT' };
-    const now = Math.floor(Date.now() / 1000);
-    const payload = {
-      iss: 'cdp',
-      nbf: now,
-      exp: now + 120,
-      sub: keyId,
-    };
+    if (!walletAddress || !walletAddress.startsWith('0x')) {
+      return NextResponse.json({ error: 'walletAddress is required' }, { status: 400 });
+    }
 
-    const encode = (obj: object) =>
-      Buffer.from(JSON.stringify(obj)).toString('base64url');
+    // ── Get real client IP (do NOT trust X-Forwarded-For in prod) ───
+    // Using placeholder per CDP docs for cases where the real IP
+    // can't be extracted reliably from the network layer.
+    const forwardedFor = req.headers.get('x-real-ip')
+      ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      ?? '192.0.2.1';
+    const clientIp = forwardedFor;
 
-    const signingInput = `${encode(header)}.${encode(payload)}`;
+    // ── Generate signed JWT via CDP SDK ──────────────────────────────
+    // The SDK builds the full "organizations/.../apiKeys/..." sub/kid
+    // format and handles all PEM parsing and ECDSA signing internally.
+    let jwt: string;
+    try {
+      jwt = await generateJwt({
+        apiKeyId:      CDP_API_KEY_ID,
+        apiKeySecret:  CDP_API_KEY_PRIVATE,
+        requestMethod: 'POST',
+        requestHost:   'api.developer.coinbase.com',
+        requestPath:   '/onramp/v1/token',
+        expiresIn:     120,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[onramp-session] JWT generation failed:', msg);
+      return NextResponse.json(
+        { error: 'JWT signing failed', detail: msg },
+        { status: 500 }
+      );
+    }
 
-    // Import ECDSA P-256 key and sign
-    const pemBody = privateKeyPem
-      .replace(/-----BEGIN EC PRIVATE KEY-----|-----END EC PRIVATE KEY-----|-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g, '');
-
-    const keyBytes = Buffer.from(pemBody, 'base64');
-
-    const cryptoKey = await crypto.subtle.importKey(
-      'pkcs8',
-      keyBytes,
-      { name: 'ECDSA', namedCurve: 'P-256' },
-      false,
-      ['sign']
-    );
-
-    const signature = await crypto.subtle.sign(
-      { name: 'ECDSA', hash: 'SHA-256' },
-      cryptoKey,
-      Buffer.from(signingInput)
-    );
-
-    const jwt = `${signingInput}.${Buffer.from(signature).toString('base64url')}`;
-
-    // Call CDP session token endpoint
-    const res = await fetch('https://api.developer.coinbase.com/onramp/v1/token', {
+    // ── Exchange JWT for a one-time session token ────────────────────
+    const cdpRes = await fetch('https://api.developer.coinbase.com/onramp/v1/token', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${jwt}`,
+        'Content-Type':  'application/json',
       },
       body: JSON.stringify({
-        project_id: projectId,
-        destination_wallets: [{ address, blockchains: ['base'], assets: ['USDC'] }],
+        addresses: [
+          {
+            address:    walletAddress,
+            blockchains: ['base'],
+          },
+        ],
+        clientIp,
       }),
     });
 
-    const data = await res.json();
-    console.log('[onramp] CDP response:', res.status, JSON.stringify(data).slice(0, 300));
-    if (!res.ok) return NextResponse.json({ error: data }, { status: res.status });
-    return NextResponse.json({ sessionToken: data.token });
+    if (!cdpRes.ok) {
+      const errText = await cdpRes.text();
+      console.error('[onramp-session] CDP API error:', cdpRes.status, errText);
+      return NextResponse.json(
+        { error: 'CDP session token request failed', detail: errText },
+        { status: 502 }
+      );
+    }
 
-  } catch (err: any) {
-    console.error('[onramp] error:', err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const { token } = await cdpRes.json() as { token: string };
+
+    if (!token) {
+      console.error('[onramp-session] CDP returned empty token');
+      return NextResponse.json(
+        { error: 'CDP returned empty session token' },
+        { status: 502 }
+      );
+    }
+
+    console.log('[onramp-session] Session token generated successfully for', walletAddress);
+    return NextResponse.json({ token });
+
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[onramp-session] Unhandled error:', msg);
+    return NextResponse.json({ error: 'Internal server error', detail: msg }, { status: 500 });
   }
 }
