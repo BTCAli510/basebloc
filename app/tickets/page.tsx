@@ -432,34 +432,47 @@ function TicketsPageInner() {
         {/* CONFIRM — paid ticket */}
         {step === 'confirm' && !isFree && calls.length > 0 && (
           <div style={s.card}>
-            <h2 style={s.cardTitle}>Confirm Purchase</h2>
+            <h2 style={s.cardTitle}>Review Order</h2>
             <div style={s.summary}>
               <SummaryRow label="Event"   value="MY CITY OUR MUSIC" />
               <SummaryRow label="Date"    value="May 23, 2026" />
               <SummaryRow label="Ticket"  value={tierLabel} />
               {discountLabel && <SummaryRow label="Discount" value={discountLabel} green />}
               <div style={{ height: 1, background: '#E5E7EB', margin: '8px 0' }} />
-              <SummaryRow label="Total" value={isFree ? 'FREE' : `${displayPrice} USDC`} bold blue={!isFree} />
+              <SummaryRow label="Today's total" value={isFree ? 'FREE' : `${displayPrice} USDC`} bold blue={!isFree} />
             </div>
 
             <p style={s.hint}>
               {`One signature sends ${displayPrice} USDC to BASE Bloc. Your onchain ticket record is written automatically after payment confirms. No crypto fees or ETH required — we cover all transaction costs.`}
             </p>
 
+            {/* Funding card — shows when wallet needs USDC */}
             {insufficientUsdc && (
-              <div style={{ marginBottom: 12 }}>
-                <div style={{
-                  background: '#FFF7ED',
-                  border: '1px solid #FED7AA',
-                  borderRadius: 10,
-                  padding: '10px 14px',
-                  marginBottom: 10,
-                  textAlign: 'center'
+              <div style={{
+                background: '#F0F4FF',
+                border: '1px solid #C7D7FF',
+                borderRadius: 14,
+                padding: '18px 20px',
+                marginBottom: 16,
+              }}>
+                <p style={{
+                  fontFamily: "'Inter Tight', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 15,
+                  color: '#0052FF',
+                  margin: '0 0 4px 0',
                 }}>
-                  <p style={{ fontSize: 13, color: '#92400E', margin: 0, fontWeight: 600 }}>
-                    ⚠️ You need USDC to complete this purchase.
-                  </p>
-                </div>
+                  Add funds to complete purchase
+                </p>
+                <p style={{
+                  fontSize: 13,
+                  color: '#374151',
+                  margin: '0 0 14px 0',
+                  lineHeight: 1.5,
+                }}>
+                  Buy USDC with card, Apple Pay, or Coinbase — then return here to finish checkout.
+                </p>
+
                 {fundingUrl ? (
                   <a
                     href={fundingUrl}
@@ -468,46 +481,64 @@ function TicketsPageInner() {
                     style={{
                       display: 'block',
                       width: '100%',
-                      padding: '14px 0',
+                      padding: '13px 0',
                       background: '#0052FF',
                       color: '#fff',
-                      borderRadius: 12,
+                      borderRadius: 10,
                       textAlign: 'center',
                       fontFamily: "'Inter Tight', sans-serif",
                       fontWeight: 700,
                       fontSize: 15,
                       textDecoration: 'none',
                       letterSpacing: '-0.01em',
-                      cursor: 'pointer',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    Buy USDC with Card →
+                    Add USDC with Coinbase →
                   </a>
                 ) : (
                   <div style={{
-                    padding: '14px 0',
-                    background: '#f3f4f6',
-                    borderRadius: 12,
+                    padding: '13px 0',
+                    background: '#E5EDFF',
+                    borderRadius: 10,
                     textAlign: 'center',
                     fontSize: 14,
-                    color: '#6b7280'
+                    color: '#6b7280',
+                    fontFamily: "'Inter Tight', sans-serif",
                   }}>
                     Loading funding options...
                   </div>
                 )}
+
+                <p style={{
+                  fontSize: 11,
+                  color: '#9CA3AF',
+                  textAlign: 'center',
+                  margin: '10px 0 0 0',
+                }}>
+                  Funds go directly to your wallet. Return here to complete checkout.
+                </p>
               </div>
             )}
 
-            <Transaction chainId={base.id} calls={calls} onStatus={handleStatus} isSponsored>
-              <div style={s.txBtnWrap}>
-                <TransactionButton text={`Pay ${displayPrice} USDC →`} />
-              </div>
-              <TransactionSponsor />
-              <TransactionStatus>
-                <TransactionStatusLabel />
-                <TransactionStatusAction />
-              </TransactionStatus>
-            </Transaction>
+            {/* Pay button — disabled when insufficient USDC */}
+            <div style={{ opacity: insufficientUsdc ? 0.4 : 1, pointerEvents: insufficientUsdc ? 'none' : 'auto' }}>
+              <Transaction chainId={base.id} calls={calls} onStatus={handleStatus} isSponsored>
+                <div style={s.txBtnWrap}>
+                  <TransactionButton text={insufficientUsdc ? 'Fund wallet first' : `Pay ${displayPrice} USDC`} />
+                </div>
+                <TransactionSponsor />
+                <TransactionStatus>
+                  <TransactionStatusLabel />
+                  <TransactionStatusAction />
+                </TransactionStatus>
+              </Transaction>
+              {!insufficientUsdc && (
+                <p style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF', marginTop: 6 }}>
+                  No extra network fees
+                </p>
+              )}
+            </div>
 
             <button style={s.ghost} onClick={() => { setStep('select'); setUsdcUnits(''); }}>← Back</button>
           </div>
