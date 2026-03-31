@@ -107,19 +107,9 @@ export default function MyCityOurMusicPage() {
         }]
       });
 
-      const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
-      const paymasterHostname = paymasterUrl
-        ? (() => { try { return new URL(paymasterUrl).hostname; } catch { return 'invalid-url'; } })()
-        : 'not-set';
       const provider = await connector.getProvider();
       console.log('[handleRSVP] provider constructor:', (provider as any)?.constructor?.name);
-      console.log('[handleRSVP] paymasterUrl hostname:', paymasterHostname);
 
-      // Single wallet_sendCalls attempt. If paymaster is configured and returns
-      // 401/400, the outer catch handles it with a generic user message.
-      // We do NOT retry with a different method — a second wallet_sendCalls
-      // without capabilities causes the Coinbase SDK to attempt a fallback path
-      // that hits the viem http() transport and throws "method not supported".
       await (provider as any).request({
         method: 'wallet_sendCalls',
         params: [{
@@ -127,7 +117,7 @@ export default function MyCityOurMusicPage() {
           chainId: '0x2105',
           from: address,
           calls: [{ to: EAS_CONTRACT, data: calldata, value: '0x0' }],
-          capabilities: paymasterUrl ? { paymasterService: { url: paymasterUrl } } : {},
+          capabilities: {},
           ...(BUILDER_CODE_DATA_SUFFIX ? { dataSuffix: BUILDER_CODE_DATA_SUFFIX } : {}),
         }],
       });
