@@ -27,6 +27,7 @@ export function Providers({ children }: { children: ReactNode }) {
         <OnchainKitProvider
           chain={base}
           apiKey={process.env.NEXT_PUBLIC_ONCHAINKIT_API_KEY}
+          projectId={process.env.NEXT_PUBLIC_CDP_PROJECT_ID}
           config={{
             paymaster: process.env.NEXT_PUBLIC_PAYMASTER_URL,
           }}

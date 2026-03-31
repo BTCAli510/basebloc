@@ -8,7 +8,8 @@
 // Either path grants VIP tier access.
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useBalance } from 'wagmi';
+import { FundButton, getOnrampBuyUrl } from '@coinbase/onchainkit/fund';
 import { useSearchParams } from 'next/navigation';
 import {
   Transaction,
@@ -114,6 +115,7 @@ function TicketsPageInner() {
   const [txHash,        setTxHash]        = useState<string | null>(null);
   const [attestUid,     setAttestUid]     = useState<string | null>(null);
   const [errorMsg,      setErrorMsg]      = useState('');
+  const [fundingUrl,    setFundingUrl]    = useState<string | undefined>(undefined);
 
   // ── VIP check on wallet connect ──────────────────────────────────────────
   useEffect(() => {
@@ -161,6 +163,33 @@ function TicketsPageInner() {
       })
       .catch(() => {});
   }, [searchParams]);
+
+  // ── USDC balance ─────────────────────────────────────────────────────────
+  const { data: usdcBalance } = useBalance({ address, token: USDC_CONTRACT });
+  const insufficientUsdc = !isFree && !!usdcUnits && !!usdcBalance && usdcBalance.value < BigInt(usdcUnits);
+
+  // ── Fetch onramp session token when entering paid confirm step ────────────
+  useEffect(() => {
+    if (step !== 'confirm' || isFree || !address || !displayPrice) return;
+    setFundingUrl(undefined);
+    fetch('/api/onramp-session', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ address, amount: Number(displayPrice) }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.sessionToken) {
+          setFundingUrl(getOnrampBuyUrl({
+            sessionToken:     data.sessionToken,
+            defaultAsset:     'USDC',
+            defaultNetwork:   'base',
+            presetFiatAmount: Number(displayPrice),
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [step, isFree, address, displayPrice]);
 
   // Tiers visible to this wallet
   const isDev = process.env.NEXT_PUBLIC_DEV_TICKETS === 'true';
@@ -416,6 +445,15 @@ function TicketsPageInner() {
             <p style={s.hint}>
               {`One signature sends ${displayPrice} USDC to BASE Bloc. Your onchain ticket record is written automatically after payment confirms. Gas is sponsored — no ETH needed.`}
             </p>
+
+            {insufficientUsdc && fundingUrl && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>
+                  Need USDC? Buy with card:
+                </p>
+                <FundButton fundingUrl={fundingUrl} openIn="popup" />
+              </div>
+            )}
 
             <Transaction chainId={base.id} calls={calls} onStatus={handleStatus} isSponsored>
               <div style={s.txBtnWrap}>
