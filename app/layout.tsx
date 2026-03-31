@@ -5,7 +5,6 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "BASE Bloc",
-  icons: { icon: "/BASEfavicon.png" },
   other: {
     "base:app_id": "69a79ca414fc33c964120f9c",
   },
