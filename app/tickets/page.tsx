@@ -446,6 +446,11 @@ function TicketsPageInner() {
               {`One signature sends ${displayPrice} USDC to BASE Bloc. Your onchain ticket record is written automatically after payment confirms. Gas is sponsored — no ETH needed.`}
             </p>
 
+            {insufficientUsdc && (
+              <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#92400E', marginBottom: 16 }}>
+                ⚠️ Your wallet has insufficient USDC. Buy USDC with a card first, then complete your purchase.
+              </div>
+            )}
             {!isFree && fundingUrl && (
               <div style={{ marginBottom: 16 }}>
                 <p style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>
