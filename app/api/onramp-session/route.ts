@@ -10,12 +10,13 @@ export async function POST(request: Request) {
     const rawKey = process.env.CDP_API_KEY_PRIVATE_KEY!.trim();
     const projectId = process.env.NEXT_PUBLIC_CDP_PROJECT_ID!;
 
-    // Convert base64 to base64url
-    const base64url = rawKey
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
-
+    // PKCS#8 Ed25519 key — extract raw 32-byte private key scalar (last 32 bytes)
+    const rawBytes = Buffer.from(
+      rawKey.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, ''),
+      'base64url'
+    );
+    const d = rawBytes.slice(-32); // last 32 bytes = private key scalar
+    const base64url = d.toString('base64url');
     const pk = await importJWK({ kty: 'OKP', crv: 'Ed25519', d: base64url }, 'EdDSA');
 
     const jwt = await new SignJWT({})
