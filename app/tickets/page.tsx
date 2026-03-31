@@ -452,7 +452,7 @@ function TicketsPageInner() {
                   ⚠️ You need USDC to complete this purchase.
                 </p>
                 {fundingUrl ? (
-                  <FundButton fundingUrl={fundingUrl} openIn="popup" text="Buy USDC with Card →" />
+                  <FundButton fundingUrl={fundingUrl} openIn="popup" />
                 ) : (
                   <a href={`https://pay.coinbase.com/buy/select-asset?appId=${process.env.NEXT_PUBLIC_CDP_PROJECT_ID}&destinationWallets=${encodeURIComponent(JSON.stringify([{address, blockchains:['base'],assets:['USDC']}]))}&presetFiatAmount=${displayPrice}&fiatCurrency=USD`}
                     target="_blank" rel="noopener noreferrer"
