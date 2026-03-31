@@ -447,16 +447,19 @@ function TicketsPageInner() {
             </p>
 
             {insufficientUsdc && (
-              <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#92400E', marginBottom: 16 }}>
-                ⚠️ Your wallet has insufficient USDC. Buy USDC with a card first, then complete your purchase.
-              </div>
-            )}
-            {!isFree && fundingUrl && (
-              <div style={{ marginBottom: 16 }}>
-                <p style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>
-                  Need USDC? Buy with card:
+              <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '12px 14px', marginBottom: 16, textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: '#92400E', marginBottom: 10, fontWeight: 600 }}>
+                  ⚠️ You need USDC to complete this purchase.
                 </p>
-                <FundButton fundingUrl={fundingUrl} openIn="popup" />
+                {fundingUrl ? (
+                  <FundButton fundingUrl={fundingUrl} openIn="popup" text="Buy USDC with Card →" />
+                ) : (
+                  <a href={`https://pay.coinbase.com/buy/select-asset?appId=${process.env.NEXT_PUBLIC_CDP_PROJECT_ID}&destinationWallets=${encodeURIComponent(JSON.stringify([{address, blockchains:['base'],assets:['USDC']}]))}&presetFiatAmount=${displayPrice}&fiatCurrency=USD`}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{ display:'block', background:'#0052FF', color:'#FFF', fontWeight:700, fontSize:14, borderRadius:10, padding:'12px 0', textDecoration:'none' }}>
+                    Buy USDC with Card →
+                  </a>
+                )}
               </div>
             )}
 
