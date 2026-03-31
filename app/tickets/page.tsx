@@ -9,7 +9,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useAccount, useBalance } from 'wagmi';
-import { FundButton, getOnrampBuyUrl } from '@coinbase/onchainkit/fund';
+import { getOnrampBuyUrl } from '@coinbase/onchainkit/fund';
 import { useSearchParams } from 'next/navigation';
 import {
   Transaction,
@@ -447,18 +447,53 @@ function TicketsPageInner() {
             </p>
 
             {insufficientUsdc && (
-              <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10, padding: '12px 14px', marginBottom: 16, textAlign: 'center' }}>
-                <p style={{ fontSize: 13, color: '#92400E', marginBottom: 10, fontWeight: 600 }}>
-                  ⚠️ You need USDC to complete this purchase.
-                </p>
+              <div style={{ marginBottom: 12 }}>
+                <div style={{
+                  background: '#FFF7ED',
+                  border: '1px solid #FED7AA',
+                  borderRadius: 10,
+                  padding: '10px 14px',
+                  marginBottom: 10,
+                  textAlign: 'center'
+                }}>
+                  <p style={{ fontSize: 13, color: '#92400E', margin: 0, fontWeight: 600 }}>
+                    ⚠️ You need USDC to complete this purchase.
+                  </p>
+                </div>
                 {fundingUrl ? (
-                  <FundButton fundingUrl={fundingUrl} openIn="popup" />
-                ) : (
-                  <a href={`https://pay.coinbase.com/buy?appId=${process.env.NEXT_PUBLIC_CDP_PROJECT_ID}`}
-                    target="_blank" rel="noopener noreferrer"
-                    style={{ display:'block', background:'#0052FF', color:'#FFF', fontWeight:700, fontSize:14, borderRadius:10, padding:'12px 0', textDecoration:'none' }}>
+                  <a
+                    href={fundingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '14px 0',
+                      background: '#0052FF',
+                      color: '#fff',
+                      borderRadius: 12,
+                      textAlign: 'center',
+                      fontFamily: "'Inter Tight', sans-serif",
+                      fontWeight: 700,
+                      fontSize: 15,
+                      textDecoration: 'none',
+                      letterSpacing: '-0.01em',
+                      cursor: 'pointer',
+                    }}
+                  >
                     Buy USDC with Card →
                   </a>
+                ) : (
+                  <div style={{
+                    padding: '14px 0',
+                    background: '#f3f4f6',
+                    borderRadius: 12,
+                    textAlign: 'center',
+                    fontSize: 14,
+                    color: '#6b7280'
+                  }}>
+                    Loading funding options...
+                  </div>
                 )}
               </div>
             )}
