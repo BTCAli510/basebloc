@@ -7,25 +7,16 @@ export async function POST(request: Request) {
     if (!address) return NextResponse.json({ error: 'address required' }, { status: 400 });
 
     const keyId = process.env.CDP_API_KEY_NAME!;
-    const rawPrivateKey = process.env.CDP_API_KEY_PRIVATE_KEY!;
+    const rawKey = process.env.CDP_API_KEY_PRIVATE_KEY!.trim();
     const projectId = process.env.NEXT_PUBLIC_CDP_PROJECT_ID!;
 
-    // Import as JWK for Ed25519
-    const base64Key = rawPrivateKey
-      .replace(/-----BEGIN PRIVATE KEY-----/g, '')
-      .replace(/-----END PRIVATE KEY-----/g, '')
-      .replace(/\\n/g, '')
-      .replace(/\s/g, '')
-      // Convert standard base64 to base64url
+    // Convert base64 to base64url
+    const base64url = rawKey
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=/g, '');
 
-    const pk = await importJWK({
-      kty: 'OKP',
-      crv: 'Ed25519',
-      d: base64Key,
-    }, 'EdDSA');
+    const pk = await importJWK({ kty: 'OKP', crv: 'Ed25519', d: base64url }, 'EdDSA');
 
     const jwt = await new SignJWT({})
       .setProtectedHeader({ alg: 'EdDSA', kid: keyId, nonce: crypto.randomUUID() })
