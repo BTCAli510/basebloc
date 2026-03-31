@@ -1,27 +1,24 @@
 import { NextResponse } from 'next/server';
-import { SignJWT, importPKCS8 } from 'jose';
+import { SignJWT, importJWK } from 'jose';
 
 export async function POST(request: Request) {
   try {
     const { address, amount } = await request.json();
     if (!address) return NextResponse.json({ error: 'address required' }, { status: 400 });
 
-    const keyName = process.env.CDP_API_KEY_NAME;
-    const rawKey = process.env.CDP_API_KEY_PRIVATE_KEY;
-    const projectId = process.env.NEXT_PUBLIC_CDP_PROJECT_ID;
+    const keyId = process.env.CDP_API_KEY_NAME!;
+    const rawPrivateKey = process.env.CDP_API_KEY_PRIVATE_KEY!;
+    const projectId = process.env.NEXT_PUBLIC_CDP_PROJECT_ID!;
 
-    console.log('[onramp] keyName:', keyName ? 'set' : 'MISSING');
-    console.log('[onramp] rawKey:', rawKey ? `set (${rawKey.slice(0, 30)}...)` : 'MISSING');
-    console.log('[onramp] projectId:', projectId ? 'set' : 'MISSING');
+    // Import as JWK for Ed25519
+    const pk = await importJWK({
+      kty: 'OKP',
+      crv: 'Ed25519',
+      d: rawPrivateKey.replace(/\\n/g, '').replace(/\s/g, ''),
+    }, 'EdDSA');
 
-    if (!keyName || !rawKey || !projectId) {
-      return NextResponse.json({ error: 'missing env vars', keyName: !!keyName, rawKey: !!rawKey, projectId: !!projectId }, { status: 500 });
-    }
-
-    const privateKey = rawKey.replace(/\\n/g, '\n');
-    const pk = await importPKCS8(privateKey, 'Ed25519');
     const jwt = await new SignJWT({})
-      .setProtectedHeader({ alg: 'EdDSA', kid: keyName, nonce: crypto.randomUUID() })
+      .setProtectedHeader({ alg: 'EdDSA', kid: keyId, nonce: crypto.randomUUID() })
       .setIssuedAt()
       .setExpirationTime('2m')
       .sign(pk);
