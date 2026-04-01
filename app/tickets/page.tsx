@@ -431,6 +431,75 @@ function TicketsPageInner() {
 
         {/* CONFIRM — paid ticket */}
         {step === 'confirm' && !isFree && calls.length > 0 && (
+          <>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              marginBottom: 18,
+              padding: "0 4px",
+            }}
+          >
+            {[
+              { num: "1", label: "Review order", active: true },
+              { num: "2", label: "Fund wallet", active: insufficientUsdc },
+              { num: "3", label: "Complete checkout", active: !insufficientUsdc },
+            ].map((step, idx) => (
+              <div
+                key={step.num}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  flex: 1,
+                }}
+              >
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    minWidth: 28,
+                    borderRadius: 999,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    fontFamily: "'Inter Tight', sans-serif",
+                    background: step.active ? "#0052FF" : "#EEF2FF",
+                    color: step.active ? "#FFFFFF" : "#6B7280",
+                    border: step.active ? "none" : "1px solid #D6DBE8",
+                  }}
+                >
+                  {step.num}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: step.active ? "#111827" : "#6B7280",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {step.label}
+                </div>
+
+                {idx < 2 && (
+                  <div
+                    style={{
+                      flex: 1,
+                      height: 1,
+                      background: "#E5E7EB",
+                      marginLeft: 8,
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
           <div style={s.card}>
             <h2 style={s.cardTitle}>Review Order</h2>
             <div style={s.summary}>
@@ -444,6 +513,20 @@ function TicketsPageInner() {
 
             <p style={s.hint}>
               {`Your ticket is created automatically after payment confirms. No extra network fees or ETH required.`}
+            </p>
+
+            <p
+              style={{
+                fontSize: 12,
+                color: "#6B7280",
+                lineHeight: 1.55,
+                margin: "10px 0 18px 0",
+              }}
+            >
+              <strong style={{ color: "#111827" }}>
+                Ticket purchases require a free Base App wallet
+              </strong>{" "}
+              — setup takes about 4 clicks and usually less than 60 seconds.
             </p>
 
             {/* Funding card — shows when wallet needs USDC */}
@@ -578,6 +661,7 @@ function TicketsPageInner() {
 
             <button style={s.ghost} onClick={() => { setStep('select'); setUsdcUnits(''); }}>← Back</button>
           </div>
+          </>
         )}
 
         {/* ATTESTING */}
