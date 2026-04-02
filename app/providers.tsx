@@ -8,7 +8,7 @@ import { base } from "wagmi/chains";
 import { coinbaseWallet } from "wagmi/connectors";
 
 const connector = coinbaseWallet({
-  appName: "BASE bloc",
+  appName: "BASEbloc.app",
   preference: "all", // shows both Smart Wallet and regular EOA in Coinbase Wallet
 });
 

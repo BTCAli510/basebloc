@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 140" width="820" height="140">
+  <defs>
+    <filter id="glow" x="-30%" y="-60%" width="160%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Icon: B inside orbit ring, centered in 130x130 box -->
+  <g transform="translate(8, 5)">
+    <!-- Outer soft ring -->
+    <ellipse cx="62" cy="65" rx="56" ry="58" fill="none" stroke="#1a5fff" stroke-width="1.5" opacity="0.35" filter="url(#glow)"/>
+    <!-- Main bold ring -->
+    <ellipse cx="62" cy="65" rx="52" ry="54" fill="none" stroke="#0052FF" stroke-width="3.5" opacity="0.92" filter="url(#glow)"/>
+    <!-- Inner subtle ring -->
+    <ellipse cx="62" cy="66" rx="46" ry="48" fill="none" stroke="#1a5fff" stroke-width="1.5" opacity="0.45" filter="url(#glow)"/>
+    <!-- B letterform -->
+    <text x="62" y="91" font-family="'Inter Tight', 'Arial Black', Arial, sans-serif" font-size="76" font-weight="900" text-anchor="middle" fill="#0052FF">B</text>
+  </g>
+
+  <!-- Wordmark to the right of icon -->
+  <g transform="translate(148, 12)">
+    <text font-family="'Inter Tight', 'Arial Black', Arial, sans-serif" font-weight="800" font-size="88">
+      <tspan x="0" y="86" fill="#0052FF">BASE</tspan><tspan fill="#0A0A0A">bloc.org</tspan>
+    </text>
+    <text x="4" y="112" font-family="'Space Mono', 'Courier New', monospace" font-size="16" fill="#F7931A" letter-spacing="2" font-weight="400">Base is for everyone - bloc</text>
+  </g>
+</svg>

@@ -74,9 +74,7 @@ function TopNav({ onMyRecords }: { onMyRecords: () => void }) {
       top: 0,
       zIndex: 50,
     }}>
-      <div className="syne" style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.5px' }}>
-        BASE <span style={{ color: '#0052FF' }}>bloc</span>
-      </div>
+      <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" height={32} style={{ display: 'block' }} />
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
         <button
           onClick={onMyRecords}

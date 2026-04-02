@@ -301,7 +301,7 @@ function TicketsPageInner() {
   return (
     <div style={s.page}>
       <header style={s.header}>
-        <span style={s.logo}>BASE Bloc</span>
+        <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" height={32} style={{ display: 'block' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {isVip && vipChecked && (
             <span style={s.vipBadge}>⭐ VIP</span>
@@ -310,7 +310,7 @@ function TicketsPageInner() {
           <Wallet>
             <ConnectWallet>
               <Avatar className="h-6 w-6" />
-              <Name />
+              <Name address={address} chain={base} />
             </ConnectWallet>
             <WalletDropdown>
               <WalletDropdownDisconnect />
@@ -358,8 +358,8 @@ function TicketsPageInner() {
               ))}
             </div>
 
-            <Field label="Your Name" note="optional">
-              <input style={s.input} placeholder="Goes on your participation record" value={attendeeName} onChange={(e) => setAttendeeName(e.target.value)} />
+            <Field label="Real Name" note="optional" subtitle="Used for community recognition. Your wallet address and Base name are captured automatically.">
+              <input style={s.input} placeholder="How you'd like to be recognized by the community" value={attendeeName} onChange={(e) => setAttendeeName(e.target.value)} />
             </Field>
 
             <Field label="Discount Code" note="optional">
@@ -705,12 +705,13 @@ function TicketsPageInner() {
 }
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
-function Field({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) {
+function Field({ label, note, subtitle, children }: { label: string; note?: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#444', marginBottom: 6 }}>
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#444', marginBottom: subtitle ? 2 : 6 }}>
         {label}{note && <span style={{ fontWeight: 400, color: '#999' }}> ({note})</span>}
       </label>
+      {subtitle && <p style={{ fontSize: 11, color: '#888', marginBottom: 6, marginTop: 0 }}>{subtitle}</p>}
       {children}
     </div>
   );

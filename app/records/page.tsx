@@ -163,7 +163,7 @@ function RecordsPageInner() {
   return (
     <div style={s.page}>
       <header style={s.header}>
-        <span style={s.logo}>BASE Bloc</span>
+        <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" height={32} style={{ display: 'block' }} />
         <span style={s.badge}>PARTICIPATION RECORDS</span>
       </header>
 
