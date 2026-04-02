@@ -24,7 +24,7 @@
   <!-- Wordmark to the right of icon -->
   <g transform="translate(148, 12)">
     <text font-family="'Inter Tight', 'Arial Black', Arial, sans-serif" font-weight="800" font-size="88">
-      <tspan x="0" y="86" fill="#0052FF">BASE</tspan><tspan fill="#0A0A0A">bloc.org</tspan>
+      <tspan x="0" y="86" fill="#0052FF">BASE</tspan><tspan fill="#0A0A0A">bloc.app</tspan>
     </text>
     <text x="4" y="112" font-family="'Space Mono', 'Courier New', monospace" font-size="16" fill="#F7931A" letter-spacing="2" font-weight="400">Base is for everyone - bloc</text>
   </g>

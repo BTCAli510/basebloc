@@ -301,8 +301,8 @@ function TicketsPageInner() {
   return (
     <div style={s.page}>
       <header style={s.header}>
-        <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" height={32} style={{ display: 'block' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" style={{ height: 28, maxWidth: 120, width: 'auto', display: 'block', flexShrink: 1 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, minWidth: 0 }}>
           {isVip && vipChecked && (
             <span style={s.vipBadge}>⭐ VIP</span>
           )}
@@ -729,7 +729,7 @@ function SummaryRow({ label, value, bold, blue, green }: { label: string; value:
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const s: Record<string, React.CSSProperties> = {
   page:      { background: '#FFF', minHeight: '100vh', fontFamily: "'Inter','Helvetica Neue',sans-serif", color: '#111' },
-  header:    { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #F0F0F0' },
+  header:    { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #F0F0F0', overflow: 'hidden', minWidth: 0 },
   logo:      { fontWeight: 800, fontSize: 18, color: '#0052FF', letterSpacing: '-0.5px' },
   badge:     { fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: '#666', background: '#F5F5F5', padding: '4px 10px', borderRadius: 99 },
   vipBadge:  { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#B8860B', background: 'rgba(184,134,11,0.1)', border: '1px solid rgba(184,134,11,0.3)', padding: '4px 10px', borderRadius: 99 },

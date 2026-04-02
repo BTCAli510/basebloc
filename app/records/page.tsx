@@ -163,7 +163,7 @@ function RecordsPageInner() {
   return (
     <div style={s.page}>
       <header style={s.header}>
-        <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" height={32} style={{ display: 'block' }} />
+        <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" style={{ height: 28, maxWidth: 120, width: 'auto', display: 'block', flexShrink: 1 }} />
         <span style={s.badge}>PARTICIPATION RECORDS</span>
       </header>
 
@@ -315,9 +315,9 @@ export default function RecordsPage() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const s: Record<string, any> = {
   page:         { background: '#FFF', minHeight: '100vh', fontFamily: "'Inter','Helvetica Neue',sans-serif", color: '#111' },
-  header:       { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #F0F0F0' },
+  header:       { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #F0F0F0', overflow: 'hidden', minWidth: 0 },
   logo:         { fontWeight: 800, fontSize: 18, color: '#0052FF', letterSpacing: '-0.5px' },
-  badge:        { fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: '#666', background: '#F5F5F5', padding: '4px 10px', borderRadius: 99 },
+  badge:        { fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: '#666', background: '#F5F5F5', padding: '4px 10px', borderRadius: 99, flexShrink: 0, minWidth: 0 },
   main:         { maxWidth: 520, margin: '0 auto', padding: '32px 20px 100px' },
   headline:     { fontSize: 36, fontWeight: 900, letterSpacing: '-1.5px', marginBottom: 10 },
   sub:          { fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 28 },

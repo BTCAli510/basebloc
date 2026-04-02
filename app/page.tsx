@@ -73,9 +73,11 @@ function TopNav({ onMyRecords }: { onMyRecords: () => void }) {
       position: 'sticky',
       top: 0,
       zIndex: 50,
+      overflow: 'hidden',
+      minWidth: 0,
     }}>
-      <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" height={32} style={{ display: 'block' }} />
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+      <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" style={{ height: 28, maxWidth: 120, width: 'auto', display: 'block', flexShrink: 1 }} />
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0, minWidth: 0 }}>
         <button
           onClick={onMyRecords}
           style={{
