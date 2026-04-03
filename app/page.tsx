@@ -76,7 +76,7 @@ function TopNav({ onMyRecords }: { onMyRecords: () => void }) {
       overflow: 'hidden',
       minWidth: 0,
     }}>
-      <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" style={{ height: 28, maxWidth: 120, width: 'auto', display: 'block', flexShrink: 1 }} />
+      <img src="/BASEbloc-logo-lockup.svg" alt="BASEbloc.app" style={{ height: 'clamp(28px, 4vw, 40px)', maxWidth: 'min(240px, 48vw)', width: 'auto', display: 'block', flexShrink: 1 }} />
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0, minWidth: 0 }}>
         <button
           onClick={onMyRecords}
@@ -534,7 +534,7 @@ export default function Home() {
           padding: '6px 14px', fontSize: 12, fontWeight: 500, color: '#444444', marginBottom: 24
         }}>
           <span className="dot-pulse" style={{ width: 6, height: 6, background: '#0052FF', borderRadius: '50%', display: 'inline-block' }}></span>
-          Built on Base · Powered by EAS
+          Built on Base · Powered by AI · For Everyone
         </div>
 
         <h1 className="base-head" style={{ fontSize: 'clamp(36px,6vw,62px)', fontWeight: 800, lineHeight: 1.15, letterSpacing: '-2px', marginBottom: 20 }}>
@@ -581,7 +581,7 @@ export default function Home() {
         <p style={{ fontSize: 13, color: '#aaa', maxWidth: 480, margin: '0 auto 32px', lineHeight: 1.6 }}>
           The first live product from the{' '}
           <a href="https://basebloc.org" target="_blank" rel="noopener noreferrer" style={{ color: '#0052FF', textDecoration: 'none', fontWeight: 600 }}>BASEbloc.org</a>
-          {' '}network — first deployed under{' '}
+          {' '}network — deployed under{' '}
           <a href="https://baseoak.org" target="_blank" rel="noopener noreferrer" style={{ color: '#0052FF', textDecoration: 'none', fontWeight: 600 }}>BASE Oakland bloc</a>
           , Coalition 001.
         </p>
@@ -781,7 +781,7 @@ export default function Home() {
               {
                 step: '02',
                 title: 'RSVP, check in, or take part',
-                body: 'Every verified participation through BASEbloc.app — starting with MY CITY OUR MUSIC — is recorded onchain via EAS, with gas fully covered.',
+                body: 'Every verified participation through BASEbloc.app — starting with MY CITY OUR MUSIC — is recorded onchain via EAS, transaction fees fully covered.',
                 tag: 'Participation Attested · $0.00 (sponsored)'
               },
               {
@@ -792,8 +792,8 @@ export default function Home() {
               },
               {
                 step: '04',
-                title: 'Participation becomes identity. Identity enables governance.',
-                body: 'These onchain records become the foundation for community, opportunity, impact and compounding value across BASEbloc.org. BASEbloc.app is the product layer that makes that portable and real.',
+                title: 'Participation becomes identity. Identity turns into opportunity that compounds.',
+                body: 'These onchain records become the foundation for connection, impact and compounding value across BASEbloc.org. BASEbloc.app is the product layer that makes that portable and real.',
                 tag: 'Community Rewards · Token Airdrops · Governance Rights'
               },
             ].map(s => (
@@ -820,7 +820,7 @@ export default function Home() {
             {[
               { name: 'Base (L2)', desc: "Coinbase's L2. Fast, cheap, and trusted by millions." },
               { name: 'EAS', desc: 'Ethereum Attestation Service — the standard for verifiable onchain claims.' },
-              { name: 'Coinbase Paymaster', desc: 'Gas is fully sponsored for attendees. Zero cost to participate.' },
+              { name: 'Coinbase Paymaster', desc: 'Onchain Transaction fees (Gas) is fully sponsored for attendees. Zero cost to participate.' },
               { name: 'Base Mini App', desc: 'Native to the Base App. No downloads. Your community is already there.' },
             ].map(i => (
               <div key={i.name} style={{ background: '#fff', borderRadius: 12, padding: 24, border: '1px solid #EFEFEF' }}>
