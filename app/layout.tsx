@@ -2,6 +2,7 @@ import "@coinbase/onchainkit/styles.css";
 import "./globals.css";
 import type { Metadata } from "next";
 import { Providers } from "./providers";
+import AppPrivyProvider from "@/components/PrivyProvider";
 
 export const metadata: Metadata = {
   title: "BASEbloc.app",
@@ -26,7 +27,9 @@ export default function RootLayout({
         <link rel="shortcut icon" type="image/png" href="/BASEfavicon.png" />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <AppPrivyProvider>
+          <Providers>{children}</Providers>
+        </AppPrivyProvider>
       </body>
     </html>
   );
