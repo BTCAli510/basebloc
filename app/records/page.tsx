@@ -37,7 +37,7 @@ type ParsedRecord = {
   txid:         string;
   eventName:    string;
   eventDate:    string;
-  venue:        string;
+  coalition:    string;
   tier:         string;
   attendeeName: string;
   platform:     string;
@@ -100,7 +100,7 @@ function parseAttestation(raw: RawAttestation): ParsedRecord {
     txid:         raw.txid,
     eventName:    easStr(fields.eventName)    || 'BASE Bloc Event',
     eventDate:    easStr(fields.eventDate)    || '',
-    venue:        easStr(fields.venue)        || '',
+    coalition:    easStr(fields.coalition)     || '',
     tier,
     attendeeName: easStr(fields.attendeeName) || easStr(fields.displayName) || '',
     platform:     easStr(fields.platform)     || 'basebloc.app',
@@ -253,7 +253,7 @@ function RecordsPageInner() {
                     <div>
                       <p style={s.eventName}>{r.eventName}</p>
                       {r.eventDate && (
-                        <p style={s.eventDate}>{r.eventDate} · {r.venue || 'Oakland, CA'}</p>
+                        <p style={s.eventDate}>{r.eventDate} · {r.coalition ? `${r.coalition} · Oakland, CA` : 'Oakland, CA'}</p>
                       )}
                     </div>
                   </div>
