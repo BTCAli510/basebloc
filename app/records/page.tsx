@@ -67,32 +67,43 @@ const QUERY = `
   }
 `;
 
+// ─── Helper: extract a plain string from any EAS field value shape ───────────
+// EAS decodedDataJson can nest values 1–3 levels deep depending on the type
+// encoder used. This unwraps until it finds a primitive, then stringifies.
+function easStr(v: unknown): string {
+  let cur = v;
+  for (let i = 0; i < 5; i++) {
+    if (cur === null || cur === undefined) return '';
+    if (typeof cur !== 'object') return String(cur);
+    const obj = cur as Record<string, unknown>;
+    if ('value' in obj) { cur = obj['value']; continue; }
+    return '';
+  }
+  return '';
+}
+
 // ─── Parse decoded attestation data ──────────────────────────────────────────
 function parseAttestation(raw: RawAttestation): ParsedRecord {
   let fields: Record<string, string> = {};
   try {
-    const decoded: Array<{ name: string; value: { value: unknown } }> =
+    const decoded: Array<{ name: string; value: unknown }> =
       JSON.parse(raw.decodedDataJson);
     for (const f of decoded) {
-      const raw = f.value.value;
-      const val = (raw !== null && typeof raw === 'object' && 'value' in (raw as object))
-        ? (raw as { value: unknown }).value
-        : raw;
-      fields[f.name] = String(val ?? '');
+      fields[f.name] = easStr(f.value);
     }
   } catch {}
 
-  const tier = fields.tier ?? fields.ticketTier ?? '';
+  const tier = easStr(fields.tier) || easStr(fields.ticketTier) || '';
   return {
     uid:          raw.id,
     time:         raw.time,
     txid:         raw.txid,
-    eventName:    fields.eventName   ?? 'BASE Bloc Event',
-    eventDate:    fields.eventDate   ?? '',
-    venue:        fields.venue       ?? '',
+    eventName:    easStr(fields.eventName)    || 'BASE Bloc Event',
+    eventDate:    easStr(fields.eventDate)    || '',
+    venue:        easStr(fields.venue)        || '',
     tier,
-    attendeeName: fields.attendeeName ?? fields.displayName ?? '',
-    platform:     fields.platform    ?? 'basebloc.app',
+    attendeeName: easStr(fields.attendeeName) || easStr(fields.displayName) || '',
+    platform:     easStr(fields.platform)     || 'basebloc.app',
     isVip:        tier.toLowerCase().includes('vip'),
     schemaId:     raw.schemaId,
     revoked:      raw.revoked,
