@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from "react";
-import { useAccount, useWalletClient } from "wagmi";
+import { useAccount } from "wagmi";
+import { BrowserProvider } from "ethers";
 import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
 import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import { base } from "viem/chains";
@@ -9,8 +10,7 @@ import { base } from "viem/chains";
 const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
 const SCHEMA_UID =
   "0x2b35516fd072b1da5045ec23a4279f4c25eb864384b222f3553f15e2d5a64553";
-const BUILDER_CODE_DATA_SUFFIX =
-  "0x62635f37736474747335310b0080218021802180218021802180218021";
+
 const EVENT_TIMESTAMP_UTC = BigInt(1779494400);
 
 // ── Staff password — change this before event day ──
@@ -28,8 +28,7 @@ export default function OGGatePage() {
   const [error, setError] = useState("");
   const [log, setLog] = useState<{ address: string; uid: string; time: string }[]>([]);
 
-  const { address, isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
+  const { address, isConnected, connector } = useAccount();
 
   function handleUnlock() {
     if (password === STAFF_PASSWORD) {
@@ -50,7 +49,7 @@ export default function OGGatePage() {
       setError("Invalid wallet address. Must be 0x followed by 40 hex characters.");
       return;
     }
-    if (!walletClient) {
+    if (!connector) {
       setError("Wallet not connected.");
       return;
     }
@@ -127,28 +126,16 @@ export default function OGGatePage() {
         ],
       });
 
-      const paymasterUrl = process.env.NEXT_PUBLIC_PAYMASTER_URL;
+      const provider = await connector.getProvider();
+      const ethersProvider = new BrowserProvider(provider as any);
+      const signer = await ethersProvider.getSigner();
 
-      const txHash = await walletClient.request({
-        method: "wallet_sendCalls",
-        params: [
-          {
-            version: "1.0",
-            chainId: `0x${base.id.toString(16)}`,
-            calls: [
-              {
-                to: EAS_CONTRACT as `0x${string}`,
-                data: callData,
-                value: "0x0",
-              },
-            ],
-            capabilities: paymasterUrl
-              ? { paymasterService: { url: paymasterUrl } }
-              : {},
-            dataSuffix: BUILDER_CODE_DATA_SUFFIX,
-          },
-        ],
-      } as never);
+      const txResponse = await signer.sendTransaction({
+        to: EAS_CONTRACT,
+        data: callData,
+        value: 0n,
+      });
+      const txHash = txResponse.hash;
 
       // Poll for attestation UID
       let uid = "";
