@@ -74,7 +74,11 @@ function parseAttestation(raw: RawAttestation): ParsedRecord {
     const decoded: Array<{ name: string; value: { value: unknown } }> =
       JSON.parse(raw.decodedDataJson);
     for (const f of decoded) {
-      fields[f.name] = String(f.value.value ?? '');
+      const raw = f.value.value;
+      const val = (raw !== null && typeof raw === 'object' && 'value' in (raw as object))
+        ? (raw as { value: unknown }).value
+        : raw;
+      fields[f.name] = String(val ?? '');
     }
   } catch {}
 
