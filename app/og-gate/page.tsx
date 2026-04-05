@@ -8,7 +8,7 @@ import { base } from "viem/chains";
 
 const EAS_CONTRACT = "0x4200000000000000000000000000000000000021";
 const SCHEMA_UID =
-  "0xb81941b702c7aacc8164f6fed9a3ff97bbf179131c9e4bedb040bd7d787da4f7";
+  "0x2b35516fd072b1da5045ec23a4279f4c25eb864384b222f3553f15e2d5a64553";
 const BUILDER_CODE_DATA_SUFFIX =
   "0x62635f37736474747335310b0080218021802180218021802180218021";
 const EVENT_TIMESTAMP_UTC = BigInt(1779494400);
@@ -63,17 +63,21 @@ export default function OGGatePage() {
       const finalDisplayName = displayName.trim() || addr.slice(0, 6) + "..." + addr.slice(-4);
 
       const schemaEncoder = new SchemaEncoder(
-        "string eventName,uint64 eventDate,string coalition,bool attending,string ticketTier,string displayName,bool verified_attendance"
+        "string eventId,string eventName,uint64 eventDate,string venueName,string venueAddress,string coalition,bool attending,string ticketTier,string displayName,bool verified_attendance,uint64 checkInTime"
       );
 
       const encodedData = schemaEncoder.encodeData([
+        { name: "eventId", value: "MCOM-2026-05-23", type: "string" },
         { name: "eventName", value: "MY CITY OUR MUSIC", type: "string" },
         { name: "eventDate", value: EVENT_TIMESTAMP_UTC, type: "uint64" },
+        { name: "venueName", value: "Henry J. Kaiser Center for the Arts", type: "string" },
+        { name: "venueAddress", value: "Oakland, CA", type: "string" },
         { name: "coalition", value: "Oakland Bloc", type: "string" },
         { name: "attending", value: true, type: "bool" },
         { name: "ticketTier", value: "General", type: "string" },
         { name: "displayName", value: finalDisplayName, type: "string" },
         { name: "verified_attendance", value: true, type: "bool" },
+        { name: "checkInTime", value: BigInt(Math.floor(Date.now() / 1000)), type: "uint64" },
       ]);
 
       const { encodeFunctionData } = await import("viem");

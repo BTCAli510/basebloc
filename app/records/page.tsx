@@ -17,7 +17,7 @@ import { base } from 'wagmi/chains';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const EAS_GRAPHQL = 'https://base.easscan.org/graphql';
-const SCHEMA_UID_LIVE    = '0xb81941b702c7aacc8164f6fed9a3ff97bbf179131c9e4bedb040bd7d787da4f7';
+const SCHEMA_UID_LIVE    = '0x2b35516fd072b1da5045ec23a4279f4c25eb864384b222f3553f15e2d5a64553';
 const SCHEMA_UID_RETIRED = '0xe75ec39ab8bfdd680f02b11817ed9e10556850278264c0917d645c73866784d9';
 const CB_VERIFIED_SCHEMA = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
 
@@ -37,7 +37,8 @@ type ParsedRecord = {
   txid:         string;
   eventName:    string;
   eventDate:    string;
-  coalition:    string;
+  venueName:    string;
+  venueAddress: string;
   tier:         string;
   attendeeName: string;
   platform:     string;
@@ -94,13 +95,19 @@ function parseAttestation(raw: RawAttestation): ParsedRecord {
   } catch {}
 
   const tier = easStr(fields.tier) || easStr(fields.ticketTier) || '';
+  const rawDate = easStr(fields.eventDate);
+  const dateNum = Number(rawDate);
+  const eventDate = !isNaN(dateNum) && dateNum > 1000000000
+    ? formatDate(dateNum)
+    : rawDate;
   return {
     uid:          raw.id,
     time:         raw.time,
     txid:         raw.txid,
     eventName:    easStr(fields.eventName)    || 'BASE Bloc Event',
-    eventDate:    easStr(fields.eventDate)    || '',
-    coalition:    easStr(fields.coalition)     || '',
+    eventDate,
+    venueName:    easStr(fields.venueName)    || easStr(fields.venue)    || '',
+    venueAddress: easStr(fields.venueAddress) || '',
     tier,
     attendeeName: easStr(fields.attendeeName) || easStr(fields.displayName) || '',
     platform:     easStr(fields.platform)     || 'basebloc.app',
@@ -253,7 +260,7 @@ function RecordsPageInner() {
                     <div>
                       <p style={s.eventName}>{r.eventName}</p>
                       {r.eventDate && (
-                        <p style={s.eventDate}>{r.eventDate} · {r.coalition ? `${r.coalition} · Oakland, CA` : 'Oakland, CA'}</p>
+                        <p style={s.eventDate}>{r.eventDate} · {r.venueName || r.venueAddress || 'Oakland, CA'}{r.venueName && r.venueAddress && `, ${r.venueAddress}`}</p>
                       )}
                     </div>
                   </div>

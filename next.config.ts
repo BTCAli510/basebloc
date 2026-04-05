@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
 import path from 'path';
+import type { NextConfig } from "next";
 
 // The EAS SDK exports.import condition points to a broken ESM build that
 // references a missing internal './eas' module. Alias directly to the CJS
