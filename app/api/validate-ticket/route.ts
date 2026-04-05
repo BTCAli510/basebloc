@@ -284,7 +284,7 @@ async function handleAttest(body: {
       { name: 'eventName',           value: 'MY CITY OUR MUSIC',                      type: 'string' },
       { name: 'eventDate',           value: EVENT_TIMESTAMP,                           type: 'uint64' },
       { name: 'venueName',           value: 'Henry J. Kaiser Center for the Arts',     type: 'string' },
-      { name: 'venueAddress',        value: 'Oakland, CA',                             type: 'string' },
+      { name: 'venueAddress',        value: '10 10th St, Oakland, CA 94607',           type: 'string' },
       { name: 'coalition',           value: 'Oakland Bloc',                            type: 'string' },
       { name: 'attending',           value: true,                                      type: 'bool'   },
       { name: 'ticketTier',          value: tierData.label,                            type: 'string' },
