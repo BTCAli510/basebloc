@@ -18,7 +18,7 @@ import { base } from 'viem/chains';
 // ─── Constants ────────────────────────────────────────────────────────────────
 const USDC_CONTRACT   = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const;
 const EAS_CONTRACT    = '0x4200000000000000000000000000000000000021' as const;
-const SCHEMA_UID      = '0xb81941b702c7aacc8164f6fed9a3ff97bbf179131c9e4bedb040bd7d787da4f7' as const;
+const SCHEMA_UID      = '0x2b35516fd072b1da5045ec23a4279f4c25eb864384b222f3553f15e2d5a64553' as const;
 const TREASURY_WALLET = '0x2E057B00Cbeccf3FF6b410daa2CC1F99DFF94E2d' as const;
 const ZERO_BYTES32    = '0x0000000000000000000000000000000000000000000000000000000000000000' as const;
 const EVENT_TIMESTAMP = 1779494400n; // May 23, 2026 UTC
@@ -275,18 +275,22 @@ async function handleAttest(body: {
   let encodedData: string;
   try {
     const { SchemaEncoder } = await import('@ethereum-attestation-service/eas-sdk');
-    const schemaString = 'string eventName,uint64 eventDate,string coalition,bool attending,string ticketTier,string displayName,bool verified_attendance';
+    const schemaString = 'string eventId,string eventName,uint64 eventDate,string venueName,string venueAddress,string coalition,bool attending,string ticketTier,string displayName,bool verified_attendance,uint64 checkInTime';
     console.log('[validate-ticket attest] schema uid:', SCHEMA_UID);
     console.log('[validate-ticket attest] schema string:', schemaString);
     const encoder = new SchemaEncoder(schemaString);
     encodedData = encoder.encodeData([
-      { name: 'eventName',           value: 'MY CITY OUR MUSIC', type: 'string' },
-      { name: 'eventDate',           value: EVENT_TIMESTAMP,     type: 'uint64' },
-      { name: 'coalition',           value: 'Oakland Bloc',      type: 'string' },
-      { name: 'attending',           value: true,                type: 'bool'   },
-      { name: 'ticketTier',          value: tierData.label,      type: 'string' },
-      { name: 'displayName',         value: displayName,         type: 'string' },
-      { name: 'verified_attendance', value: false,               type: 'bool'   },
+      { name: 'eventId',             value: 'MCOM-2026-05-23',                        type: 'string' },
+      { name: 'eventName',           value: 'MY CITY OUR MUSIC',                      type: 'string' },
+      { name: 'eventDate',           value: EVENT_TIMESTAMP,                           type: 'uint64' },
+      { name: 'venueName',           value: 'Henry J. Kaiser Center for the Arts',     type: 'string' },
+      { name: 'venueAddress',        value: 'Oakland, CA',                             type: 'string' },
+      { name: 'coalition',           value: 'Oakland Bloc',                            type: 'string' },
+      { name: 'attending',           value: true,                                      type: 'bool'   },
+      { name: 'ticketTier',          value: tierData.label,                            type: 'string' },
+      { name: 'displayName',         value: displayName,                               type: 'string' },
+      { name: 'verified_attendance', value: false,                                     type: 'bool'   },
+      { name: 'checkInTime',         value: 0n,                                        type: 'uint64' },
     ]);
   } catch (err: any) {
     console.error('[validate-ticket attest] EAS encode error:', err?.name, err?.message, err?.stack);
