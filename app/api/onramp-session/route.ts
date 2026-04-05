@@ -37,9 +37,11 @@ function inspectSecret(raw: string, source: SecretShape["source"]): SecretShape 
 function prepareSecret(raw: string): string {
   const trimmed = raw.trim();
 
-  // Ed25519 base64 secret — pass through as-is
+  // Ed25519 base64 secret — strip ALL whitespace and escaped newlines before
+  // passing to the SDK. CDP keys copied from JSON often contain literal \n
+  // escape sequences that corrupt base64 decoding and cause length != 64.
   if (!trimmed.includes("BEGIN")) {
-    return trimmed;
+    return trimmed.replace(/\\n/g, "").replace(/\s+/g, "");
   }
 
   // Normalize line endings for PEM formats
