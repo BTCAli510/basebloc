@@ -190,10 +190,10 @@ export default function Home() {
                 &ldquo;Communities have always created value they couldn&apos;t keep. Platforms captured it. Institutions controlled it.&rdquo;
               </div>
               <p className="thesis-bold">
-                Bitcoin became a vault for those already positioned. BASE Oakland bloc is building a launchpad for those who are not.
+                Bitcoin became a vault for those already positioned. BASE Oakland bloc is building a launchpad for everyone.
               </p>
               <p className="thesis-body">
-                BASEbloc.app is built on a single premise: participation should compound for the people doing the participating. Not the platform. Not the landlord. Not the aggregator.
+                BASEbloc.app is built on a single premise: participation should compound for the people doing the participating. Not the platform. Not the landlord. Not the aggregator. And not anyone trying to keep standing they are no longer earning.
               </p>
               <p className="thesis-body">
                 Onchain infrastructure makes contribution legible, verifiable, and ownable. It turns showing up into leverage. Reputation into portable capital. Community into durable infrastructure.
