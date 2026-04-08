@@ -126,6 +126,28 @@ body {
 .hero-headline .accent { color: var(--base-blue); }
 .hero-headline .orange { color: var(--btc-orange); }
 
+.infra-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.infra-circle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -44%);
+  width: 115%;
+  height: 220%;
+  pointer-events: none;
+  display: block;
+}
+
+.infra-circle svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
 .hero-sub {
   font-size: 17px;
   line-height: 1.7;

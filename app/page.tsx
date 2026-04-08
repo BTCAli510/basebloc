@@ -32,11 +32,28 @@ export default function Home() {
             <div className="hero-eyebrow">BASE Oakland bloc · Coalition 001</div>
             <h1 className="hero-headline tight">
               Community<br />
-              <span className="accent">coordination</span><br />
-              infrastructure.
+              coordination<br />
+              <span className="infra-wrap">
+                infrastructure
+                <span className="infra-circle" aria-hidden="true">
+                  <svg viewBox="0 0 340 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                    <defs>
+                      <filter id="iglow" x="-30%" y="-80%" width="160%" height="260%">
+                        <feGaussianBlur stdDeviation="3" result="blur"/>
+                        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                      </filter>
+                    </defs>
+                    <g filter="url(#iglow)" opacity="0.9">
+                      <ellipse cx="170" cy="38" rx="158" ry="22" fill="none" stroke="#0052FF" strokeWidth="2.2" strokeLinecap="round" transform="rotate(-2 170 38)"/>
+                      <ellipse cx="170" cy="38" rx="154" ry="19" fill="none" stroke="#0052FF" strokeWidth="1.6" strokeLinecap="round" transform="rotate(2.5 170 38)"/>
+                      <ellipse cx="170" cy="38" rx="162" ry="25" fill="none" stroke="#0052FF" strokeWidth="1.1" strokeLinecap="round" transform="rotate(-1 170 38)"/>
+                    </g>
+                  </svg>
+                </span>
+              </span>
             </h1>
             <p className="hero-sub">
-              BASEbloc.app turns real-world participation — events, services, commerce, community — into verified onchain identity that builds over time. Every action compounds.
+              BASEbloc.app helps communities keep more of the value they create — and turn participation into belonging that compounds. Every recognized action builds over time.
             </p>
             <div className="hero-ctas">
               <div className="v4-btn-primary-wrap">
@@ -95,7 +112,7 @@ export default function Home() {
                 <div className="hero-stat-label">Gas fees for users</div>
               </div>
               <div className="hero-stat">
-                <div className="hero-stat-num">6</div>
+                <div className="hero-stat-num">TBA</div>
                 <div className="hero-stat-label">Cities in coalition network</div>
               </div>
             </div>
@@ -112,7 +129,7 @@ export default function Home() {
           <div className="lanes-grid">
             <div className="lane-card">
               <div className="lane-icon blue">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0052FF" strokeWidth="2.5" strokeLinecap="round">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0052FF" strokeWidth="2.5" strokeLinecap="round">
                   <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </div>
@@ -128,7 +145,7 @@ export default function Home() {
             </div>
             <div className="lane-card">
               <div className="lane-icon orange">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F7931A" strokeWidth="2.5" strokeLinecap="round">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F7931A" strokeWidth="2.5" strokeLinecap="round">
                   <circle cx="12" cy="12" r="9" /><path d="M9 12l2 2 4-4" />
                 </svg>
               </div>
@@ -144,13 +161,13 @@ export default function Home() {
             </div>
             <div className="lane-card">
               <div className="lane-icon dark">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
                   <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
                 </svg>
               </div>
               <div className="lane-tag">Records</div>
               <div className="lane-title tight">Proof that compounds.</div>
-              <p className="lane-body">Your events and daily commerce feed the exact same identity graph. Every recognized participation signal — from door scans to merchant transactions — builds a single permanent, portable record that powers Bloc Status and unlocks access. Every recognized action adds to the ledger.</p>
+              <p className="lane-body">Your events and daily commerce feed the exact same shared community record. Every recognized participation signal — from door scans to merchant transactions — builds a single permanent, portable record that powers Bloc Status and unlocks access. Every recognized action adds to the ledger.</p>
               <div className="lane-examples">
                 <span className="lane-example">EAS attestations per activation</span>
                 <span className="lane-example">Bloc Status: Visitor → OG → Bloc Builder</span>
@@ -304,7 +321,7 @@ export default function Home() {
             <div className="step">
               <div className="step-num">02 · ACT</div>
               <div className="step-verb tight">Participate in your city.</div>
-              <p className="step-desc">RSVP to events. Check in at the door. Transact with coalition merchants in USDC. Volunteer. Refer members. Perform or speak. Every action generates a signal. Every signal is a candidate for attestation.</p>
+              <p className="step-desc">RSVP to events. Check in at the door. Transact with coalition merchants in USDC. Volunteer. Refer members. Perform or speak. Every action generates a signal. Every recognized signal can be recorded onchain.</p>
               <div className="step-proof">IRL + Online signals · Verified by coalition</div>
             </div>
             <div className="step">
