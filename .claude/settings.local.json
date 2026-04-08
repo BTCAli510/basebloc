@@ -9,7 +9,20 @@
       "Bash(npm run:*)",
       "Bash(grep:*)",
       "Bash(vercel --version)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(curl -L https://foundry.paradigm.xyz)",
+      "Bash(bash)",
+      "Bash(curl -L --ssl-no-revoke https://foundry.paradigm.xyz)",
+      "Bash(powershell:*)",
+      "Bash(export PATH=\"$PATH:/c/Users/aholf/.foundry/bin\")",
+      "Bash(forge init:*)",
+      "Bash(forge build:*)",
+      "Bash(forge install:*)",
+      "Bash(forge create:*)",
+      "Bash(cast balance:*)",
+      "Bash(cast wallet:*)"
     ]
   }
 }
