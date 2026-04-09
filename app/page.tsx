@@ -1,13 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>BASEbloc.app — Community Coordination Hub</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+export default function Page() {
+  const styles = `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
     --base-blue: #0052FF;
@@ -1609,13 +1601,9 @@
   .hero-headline { animation: fadeUp 0.5s 0.1s ease both; }
   .hero-sub { animation: fadeUp 0.5s 0.2s ease both; }
   .hero-ctas { animation: fadeUp 0.5s 0.3s ease both; }
-  .hero-right { animation: fadeUp 0.5s 0.2s ease both; }
+  .hero-right { animation: fadeUp 0.5s 0.2s ease both; }`;
 
-</style>
-</head>
-<body>
-
-<!-- NAV -->
+  const pageHtml = `<!-- NAV -->
 <nav>
   <a href="/" class="nav-logo">BASE<span>bloc</span>.app</a>
   <ul class="nav-links">
@@ -2265,4 +2253,14 @@
     </div>
   </div>
   <div class="footer-credit">
-    Courtesy of <a href="https://orangessance.com">Orangessance</
+    Courtesy of <a href="https://orangessance.com">Orangessance</a>
+  </div>
+</footer>`;
+
+  return (
+    <>
+      <style jsx global>{styles}</style>
+      <main dangerouslySetInnerHTML={{ __html: pageHtml }} />
+    </>
+  );
+}
