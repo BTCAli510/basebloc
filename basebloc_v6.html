@@ -86,15 +86,33 @@
 
   .nav-cta:hover { background: #e8841a !important; }
 
+  .nav-link-outline {
+    background: #fff !important;
+    color: var(--black) !important;
+    border: 1.5px solid var(--black) !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    padding: 6px 14px !important;
+  }
+
+  .nav-link-outline:hover { background: var(--off-white) !important; }
+
   /* ── HERO ── */
   .hero {
-    padding: 100px 32px 80px;
-    max-width: 1100px;
+    padding: 40px 32px 0;
+    max-width: 1280px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
+    grid-template-columns: 1fr 0.72fr;
+    gap: 32px;
+    align-items: stretch;
+  }
+
+  .hero-left-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    height: 100%;
   }
 
   .hero-eyebrow {
@@ -118,6 +136,28 @@
 
   .hero-headline .accent { color: var(--base-blue); }
   .hero-headline .orange { color: var(--btc-orange); }
+
+  .infra-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  .infra-circle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -44%);
+    width: 115%;
+    height: 220%;
+    pointer-events: none;
+    display: block;
+  }
+
+  .infra-circle svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
 
   .hero-sub {
     font-size: 17px;
@@ -170,7 +210,272 @@
 
   .hero-right {
     position: relative;
+    display: flex;
+    flex-direction: column;
   }
+
+  /* ── EVENTS PREVIEW (middle column) ── */
+  .hero-events {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .events-block {
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .events-block-header {
+    padding: 18px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .events-block-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--base-blue);
+  }
+
+  .events-block-title {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: var(--black);
+    margin-top: 4px;
+  }
+
+  .events-see-all {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mid-gray, #888);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .events-see-all:hover { color: var(--black); }
+
+  .events-cards-list {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .ev-card {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 16px;
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+    flex: 1;
+  }
+
+  .ev-card:last-child { border-bottom: none; }
+
+  .ev-thumb {
+    width: 120px;
+    height: 90px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .ev-thumb-featured {
+    background: linear-gradient(135deg, #0A1628 0%, #0052FF 60%, #1a1a2e 100%);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .ev-thumb-featured-text {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 8px;
+    font-weight: 900;
+    color: #fff;
+    text-align: center;
+    line-height: 1.2;
+    letter-spacing: 0.03em;
+  }
+
+  .ev-thumb-featured-sub {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 8px;
+    font-weight: 900;
+    color: var(--btc-orange);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .ev-thumb-tba {
+    background: #f2f2f2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #ccc;
+    text-transform: uppercase;
+  }
+
+  .ev-badge-featured {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: var(--base-blue);
+    color: #fff;
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 5px;
+    border-radius: 3px;
+  }
+
+  .ev-body {}
+
+  .ev-coalition {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--base-blue);
+    margin-bottom: 3px;
+  }
+
+  .ev-name {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    color: var(--black);
+    margin-bottom: 4px;
+    line-height: 1.2;
+  }
+
+  .ev-date {
+    font-size: 10px;
+    color: #888;
+    margin-bottom: 7px;
+  }
+
+  .ev-tags {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .ev-tag {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: #666;
+    font-weight: 500;
+  }
+
+  .ev-actions {
+    display: flex;
+    gap: 5px;
+  }
+
+  .ev-btn-primary {
+    background: var(--base-blue);
+    color: #fff;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 6px;
+    text-decoration: none;
+  }
+
+  .ev-btn-secondary {
+    background: transparent;
+    color: var(--base-blue);
+    border: 1.5px solid var(--base-blue);
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 6px;
+    text-decoration: none;
+  }
+
+  .ev-tba-name {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    color: #ccc;
+    margin-top: 6px;
+  }
+
+  .ev-tba-network {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #ccc;
+  }
+
+  .ev-notify-btn {
+    background: transparent;
+    color: #aaa;
+    border: 1px solid #e0e0e0;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 9px;
+    font-weight: 500;
+    padding: 4px 9px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 8px;
+  }
+
+  .events-cta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: #fafafa;
+  }
+
+  .btn-ghost-outline {
+    text-align: center;
+    background: #fff;
+    color: var(--black);
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1.5px solid #D4D4D4;
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .btn-ghost-outline:hover { border-color: #999; background: var(--off-white); }
 
   .loop-card {
     background: #fff;
@@ -178,6 +483,9 @@
     border-radius: 20px;
     padding: 32px;
     color: var(--black);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   .loop-label {
@@ -193,6 +501,7 @@
     display: flex;
     flex-direction: column;
     gap: 0;
+    flex: 1;
   }
 
   .loop-step {
@@ -1256,8 +1565,18 @@
   .footer-credit a:hover { color: #888; }
 
   /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .hero { grid-template-columns: 1fr 0.8fr; }
+  }
+
   @media (max-width: 900px) {
-    .hero { grid-template-columns: 1fr; gap: 48px; padding: 60px 24px 60px; }
+    .hero { grid-template-columns: 1fr; gap: 28px; padding: 24px 24px 0; }
+    .hero-left-stack { order: 1; }
+    .hero-right { order: 2; }
+    .featured-events-grid { grid-template-columns: 1fr !important; }
+    .featured-events-grid > div { border-right: none !important; border-bottom: 1px solid var(--border); }
+    .featured-events-grid > div:last-child { border-bottom: none; }
+    .featured-events-section { padding: 0 24px 36px !important; }
     .lanes-grid { grid-template-columns: 1fr; }
     .thesis-grid { grid-template-columns: 1fr; gap: 40px; }
     .merchant-inner { grid-template-columns: 1fr; gap: 40px; }
@@ -1304,28 +1623,73 @@
     <li><a href="#events">Events</a></li>
     <li><a href="#records">Records</a></li>
     <li><a href="#merchants">Merchants</a></li>
-    <li><a href="#" class="nav-cta">Connect Wallet</a></li>
+    <li><a href="#records" class="nav-cta">My Records</a></li>
   </ul>
 </nav>
 
 <!-- HERO -->
-<section style="padding-bottom: 0;">
+<section style="padding-bottom: 40px; padding-top: 0;">
   <div class="hero">
-    <div class="hero-left">
-      <div class="hero-eyebrow">BASE Oakland bloc · Coalition 001</div>
-      <h1 class="hero-headline tight">
-        Community<br>
-        <span class="accent">coordination</span><br>
-        infrastructure.<span class="orange">.</span>
-      </h1>
-      <p class="hero-sub">
-        BASEbloc.app turns real-world participation — events, services, commerce, community — into verified onchain identity that builds over time. Every action compounds.
-      </p>
-      <div class="hero-ctas">
-        <a href="#" class="btn-primary">Connect Wallet — Start Your Record</a>
-        <a href="#events" class="btn-secondary">Explore Events →</a>
+
+    <!-- LEFT STACK: copy + events preview -->
+    <div class="hero-left-stack">
+
+      <!-- Copy -->
+      <div class="hero-left">
+        <div class="hero-eyebrow">Orangessance · BASE Oakland bloc · Coalition 001 Presents</div>
+        <h1 class="hero-headline tight">
+          Community<br>
+          coordination<br>
+          <span class="infra-wrap">infrastructure<span class="infra-circle" aria-hidden="true"><svg viewBox="0 0 340 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><defs><filter id="iglow" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#iglow)" opacity="0.9"><ellipse cx="170" cy="38" rx="158" ry="22" fill="none" stroke="#0052FF" stroke-width="2.2" stroke-linecap="round" transform="rotate(-2 170 38)"/><ellipse cx="170" cy="38" rx="154" ry="19" fill="none" stroke="#0052FF" stroke-width="1.6" stroke-linecap="round" transform="rotate(2.5 170 38)"/><ellipse cx="170" cy="38" rx="162" ry="25" fill="none" stroke="#0052FF" stroke-width="1.1" stroke-linecap="round" transform="rotate(-1 170 38)"/></g></svg></span></span>
+        </h1>
+        <p class="hero-sub">
+          BASEbloc.app helps communities keep more of the value they create — and turn participation into belonging that compounds. Every recognized action builds over time.
+        </p>
+        <div class="hero-ctas">
+          <a href="#events" class="btn-primary">Explore Events</a>
+          <a href="#host" class="btn-secondary">Host an Event</a>
+        </div>
       </div>
-    </div>
+
+      <!-- Events Preview (sits below copy, same left column) -->
+      <div class="hero-events">
+        <div class="events-block">
+          <div class="events-block-header">
+            <div>
+              <div class="events-block-eyebrow">Featured Events</div>
+              <div class="events-block-title tight">Live Network Activations</div>
+            </div>
+            <a href="#events" class="events-see-all">See all events →</a>
+          </div>
+          <div class="events-cards-list">
+            <!-- Card 1: Featured -->
+            <div class="ev-card">
+              <div class="ev-thumb" style="position:relative; flex-shrink:0; overflow:hidden;">
+                <img src="/flyer.png" alt="MY CITY OUR MUSIC" style="width:100%; height:100%; object-fit:cover; display:block;" />
+                <div class="ev-badge-featured">FEATURED</div>
+              </div>
+              <div class="ev-body">
+                <div class="ev-coalition">HipHopTV + Oakland XChange + CitiesABC · Coalition 001</div>
+                <div class="ev-name tight">MY CITY OUR MUSIC</div>
+                <div class="ev-date">May 23, 2026 · Henry J. Kaiser Center, Oakland</div>
+                <div class="ev-tags">
+                  <span class="ev-tag">Music</span>
+                  <span class="ev-tag">Creative Industries</span>
+                  <span class="ev-tag">AI Summit</span>
+                </div>
+                <div class="ev-actions">
+                  <a href="#tickets" class="ev-btn-primary">Get Tickets</a>
+                  <a href="#rsvp" class="ev-btn-secondary">RSVP on Base</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /hero-left-stack -->
+
+    <!-- RIGHT: Participation Loop -->
     <div class="hero-right">
       <div class="loop-card">
         <div class="loop-label">The Participation Loop</div>
@@ -1374,7 +1738,7 @@
           <div class="hero-stat-label">Gas fees for users</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-num white">6</div>
+          <div class="hero-stat-num">TBA</div>
           <div class="hero-stat-label">Cities in coalition network</div>
         </div>
       </div>
@@ -1391,7 +1755,7 @@
     <div class="lanes-grid">
       <div class="lane-card">
         <div class="lane-icon blue">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0052FF" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0052FF" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         </div>
         <div class="lane-tag">Events</div>
         <div class="lane-title tight">Attendance becomes identity.</div>
@@ -1405,11 +1769,11 @@
       </div>
       <div class="lane-card">
         <div class="lane-icon orange">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F7931A" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F7931A" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
         </div>
         <div class="lane-tag">Services</div>
         <div class="lane-title tight">Commerce builds your record.</div>
-        <p class="lane-body">Eligible community businesses on Base rails. Zero BASEbloc platform fees. Fast USDC settlement. Every transaction with a coalition merchant can add to your verified community record — automatically.</p>
+        <p class="lane-body">Zero BASEbloc platform fees for eligible community businesses. Fast USDC settlement on Base. Every transaction with a coalition merchant turns commerce into verified belonging — automatically.</p>
         <div class="lane-examples">
           <span class="lane-example">Barbershops and salons</span>
           <span class="lane-example">Community businesses and vendors</span>
@@ -1419,11 +1783,11 @@
       </div>
       <div class="lane-card">
         <div class="lane-icon dark">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         </div>
         <div class="lane-tag">Records</div>
         <div class="lane-title tight">Proof that compounds.</div>
-        <p class="lane-body">Your events and daily commerce feed the exact same identity graph. Every recognized participation signal — from door scans to merchant transactions — builds a single permanent, portable record that powers Bloc Status and unlocks access. Every recognized action adds to the ledger.</p>
+        <p class="lane-body">Your events and daily commerce feed the exact same shared community record. Every recognized participation signal — from door scans to merchant transactions — builds a single permanent, portable record that powers Bloc Status and unlocks access. Every recognized action adds to the ledger.</p>
         <div class="lane-examples">
           <span class="lane-example">EAS attestations per activation</span>
           <span class="lane-example">Bloc Status: Visitor → OG → Bloc Builder</span>
@@ -1446,16 +1810,16 @@
           "Communities have always created value they couldn't keep. Platforms captured it. Institutions controlled it."
         </div>
         <p class="thesis-body" style="font-family:'Inter Tight',sans-serif; font-size:17px; font-weight:700; color:#0A0A0A; letter-spacing:-0.3px; line-height:1.5;">
-          Bitcoin became a vault for those already positioned. BASE Oakland bloc is building a launchpad for those who are not.
+          Bitcoin is a vault for those already positioned. BASEbloc is building a launchpad for everyone.
         </p>
         <p class="thesis-body">
-          BASEbloc.app is built on a single premise: participation should compound for the people doing the participating. Not the platform. Not the landlord. Not the aggregator.
+          BASEbloc.app is built on a single premise: participation should compound for the people doing the participating. Not the platform. Not the landlord. Not the aggregator. And not anyone trying to hold standing they are no longer earning.
         </p>
         <p class="thesis-body">
           Onchain infrastructure makes contribution legible, verifiable, and ownable. It turns showing up into leverage. Reputation into portable capital. Community into durable infrastructure.
         </p>
         <p class="thesis-body">
-          Physical wealth can be burned down. An EAS attestation on Base mainnet cannot.
+          Your BASEbloc efforts (EAS attestations) on Base are forever.
         </p>
       </div>
       <div class="thesis-right">
@@ -1577,7 +1941,7 @@
       <div class="step">
         <div class="step-num">02 · ACT</div>
         <div class="step-verb tight">Participate in your city.</div>
-        <p class="step-desc">RSVP to events. Check in at the door. Transact with coalition merchants in USDC. Volunteer. Refer members. Perform or speak. Every action generates a signal. Every signal is a candidate for attestation.</p>
+        <p class="step-desc">RSVP to events. Check in at the door. Transact with coalition merchants in USDC. Volunteer. Refer members. Perform or speak. Every action generates a signal. Every recognized signal can be recorded onchain.</p>
         <div class="step-proof">IRL + Online signals · Verified by coalition</div>
       </div>
       <div class="step">
@@ -1709,8 +2073,8 @@
   </div>
 </section>
 
-<!-- EVENT ACTIVATION -->
-<section class="activation-section" id="events">
+<!-- COALITION 001 ACTIVATION -->
+<section class="activation-section" id="activation">
   <div class="section-inner">
     <div class="activation-inner">
       <div class="activation-left">
@@ -1741,17 +2105,12 @@
             <div class="act-detail-val">EAS Schema #1354 · gasless · every attendee</div>
           </div>
         </div>
-        <a href="#" class="btn-primary">RSVP</a>
+        <a href="https://basebloc.app/events" class="btn-primary">Get Tickets</a>
       </div>
       <div class="activation-right">
         <div class="event-card">
-          <div class="event-card-img">
-            <div class="event-flyer-text">
-              <div class="event-flyer-city">Oakland, CA · Coalition 001</div>
-              <div class="event-flyer-title">MY CITY</div>
-              <div class="event-flyer-sub">OUR MUSIC</div>
-            </div>
-          </div>
+          <!-- Real flyer image -->
+          <img src="/flyer.png" alt="MY CITY OUR MUSIC — May 23, 2026" style="width:100%; display:block; border-radius:16px 16px 0 0; object-fit:cover; aspect-ratio:16/9;" />
           <div class="event-card-body">
             <div class="event-card-date">May 23, 2026</div>
             <div class="event-card-title tight">MY CITY OUR MUSIC</div>
@@ -1760,10 +2119,73 @@
               <span class="event-tag eas">EAS Credential</span>
               <span class="event-tag vip">VIP Available</span>
             </div>
-            <a href="#" class="event-cta">RSVP — Secure Your Spot</a>
+            <a href="https://basebloc.app/events" class="event-cta">RSVP — Secure Your Spot</a>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE NETWORK ACTIVATIONS -->
+<section id="events" style="padding: 80px 0; background: #fff; border-top: 1px solid var(--border);">
+  <div style="max-width: 1280px; margin: 0 auto; padding: 0 32px;">
+
+    <!-- Header row -->
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom: 48px; flex-wrap:wrap; gap:16px;">
+      <div>
+        <div style="font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--base-blue); margin-bottom:10px;">Featured Events</div>
+        <h2 style="font-family:'Inter Tight',sans-serif; font-size:clamp(32px,4vw,56px); font-weight:800; letter-spacing:-2px; line-height:1.05; color:var(--black); margin-bottom:10px;">Live Network Activations</h2>
+        <p style="font-size:15px; color:#666; line-height:1.6; max-width:520px;">Coalition-led activations powered by BASEbloc.app across the BASEbloc.org network.</p>
+      </div>
+      <a href="https://basebloc.app/events" style="display:inline-flex; align-items:center; gap:8px; font-family:'Inter Tight',sans-serif; font-size:13px; font-weight:600; color:var(--black); text-decoration:none; border:1.5px solid var(--border); border-radius:10px; padding:10px 18px; white-space:nowrap; flex-shrink:0;">See all events →</a>
+    </div>
+
+    <!-- 3-card grid -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px;">
+
+      <!-- Card 1: Coming Soon -->
+      <div style="border:1px solid var(--border); border-radius:20px; overflow:hidden; background:#fff; display:flex; flex-direction:column;">
+        <div style="aspect-ratio:4/3; background:#f2f2f2; display:flex; align-items:center; justify-content:center;">
+          <span style="font-family:'Inter Tight',sans-serif; font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#ccc;">COMING SOON</span>
+        </div>
+        <div style="padding:22px; flex:1; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-family:'Inter Tight',sans-serif; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#ccc;">BASEbloc.org Network</div>
+          <div style="font-family:'Inter Tight',sans-serif; font-size:24px; font-weight:800; letter-spacing:-0.5px; color:#ccc;">TBA</div>
+          <div style="margin-top:auto; padding-top:16px;">
+            <a href="https://basebloc.app/events" style="display:inline-block; background:transparent; color:#aaa; border:1px solid #e0e0e0; font-family:'Inter Tight',sans-serif; font-size:12px; font-weight:500; padding:8px 16px; border-radius:8px; text-decoration:none;">Notify Me</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Coming Soon -->
+      <div style="border:1px solid var(--border); border-radius:20px; overflow:hidden; background:#fff; display:flex; flex-direction:column;">
+        <div style="aspect-ratio:4/3; background:#f2f2f2; display:flex; align-items:center; justify-content:center;">
+          <span style="font-family:'Inter Tight',sans-serif; font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#ccc;">COMING SOON</span>
+        </div>
+        <div style="padding:22px; flex:1; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-family:'Inter Tight',sans-serif; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#ccc;">BASEbloc.org Network</div>
+          <div style="font-family:'Inter Tight',sans-serif; font-size:24px; font-weight:800; letter-spacing:-0.5px; color:#ccc;">TBA</div>
+          <div style="margin-top:auto; padding-top:16px;">
+            <a href="https://basebloc.app/events" style="display:inline-block; background:transparent; color:#aaa; border:1px solid #e0e0e0; font-family:'Inter Tight',sans-serif; font-size:12px; font-weight:500; padding:8px 16px; border-radius:8px; text-decoration:none;">Notify Me</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Coming Soon -->
+      <div style="border:1px solid var(--border); border-radius:20px; overflow:hidden; background:#fff; display:flex; flex-direction:column;">
+        <div style="aspect-ratio:4/3; background:#f2f2f2; display:flex; align-items:center; justify-content:center;">
+          <span style="font-family:'Inter Tight',sans-serif; font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#ccc;">COMING SOON</span>
+        </div>
+        <div style="padding:22px; flex:1; display:flex; flex-direction:column; gap:8px;">
+          <div style="font-family:'Inter Tight',sans-serif; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#ccc;">BASEbloc.org Network</div>
+          <div style="font-family:'Inter Tight',sans-serif; font-size:24px; font-weight:800; letter-spacing:-0.5px; color:#ccc;">TBA</div>
+          <div style="margin-top:auto; padding-top:16px;">
+            <a href="https://basebloc.app/events" style="display:inline-block; background:transparent; color:#aaa; border:1px solid #e0e0e0; font-family:'Inter Tight',sans-serif; font-size:12px; font-weight:500; padding:8px 16px; border-radius:8px; text-decoration:none;">Notify Me</a>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -1804,8 +2226,8 @@
       </div>
       <div class="coalition-city">
         <div class="city-num">006</div>
-        <div class="city-name tight">Chicago</div>
-        <div class="city-status">Coming</div>
+        <div class="city-name tight">New York</div>
+        <div class="city-status">BASEnycbloc.org · Coming</div>
       </div>
     </div>
     <div class="closing-line tight">
