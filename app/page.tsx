@@ -3283,8 +3283,8 @@ export default function Page() {
                   <span class="ev-tag">AI Summit</span>
                 </div>
                 <div class="ev-actions">
-                  <a href="#tickets" class="ev-btn-primary">Get Tickets</a>
-                  <a href="#rsvp" class="ev-btn-secondary">RSVP on Base</a>
+                  <a href="/tickets" class="ev-btn-primary">Get Tickets</a>
+                  <a href="/events/my-city-our-music" class="ev-btn-secondary">RSVP on Base</a>
                 </div>
               </div>
             </div>
